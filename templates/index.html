@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>彰濱案場控制系統</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+  :root {
+    --primary: #2563eb; /* 藍色主色 */
+    --primary-light: #f1f5f9; /* 卡片/背景淡藍 */
+    --success: #22c55e; /* 綠色 */
+    --danger: #ef4444; /* 紅色 */
+    --warning: #f59e42; /* 橘色 */
+    --background: #f8fafc; /* 整體背景 */
+    --card-bg: #fff;
+    --card-border: #e5e7eb;
+    --text-main: #1e293b; /* 深灰藍 */
+    --text-secondary: #2563eb;
+    --shadow: 0 2px 8px rgba(30,41,59,0.08);
+    --font-main: 'Inter', 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+    --radius: 14px;
+  }
+  html, body {
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+    background: var(--background) url('../static/area.jpg') no-repeat center center fixed;
+    background-size: 100vw 100vh;
+    background-position: center center;
+    background-repeat: no-repeat;
+    color: var(--text-main);
+    overflow: hidden;
+    font-size: 18px;
+  }
+  #main-content {
+    min-height: calc(100vh - 56px - 38px);
+    max-height: calc(100vh - 56px - 38px);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  nav {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-bottom: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+    font-size: 18px;
+    font-weight: 500;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-title {
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 1.5em;
+    margin-right: 32px;
+  }
+  .nav-menu {
+    display: flex;
+    gap: 8px;
+  }
+  .nav-button {
+    background: none;
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-size: 1em;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+  .nav-button.active, .nav-button:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    padding: 32px;
+  }
+  .device-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    transition: box-shadow 0.2s, border 0.2s;
+  }
+  .device-card:hover {
+    box-shadow: 0 6px 24px rgba(37,99,235,0.10);
+    border: 1.5px solid var(--primary);
+  }
+  .device-card h3 {
+    color: var(--primary);
+    font-size: 1.7em;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .control-group {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-family: var(--font-main);
+    font-weight: 500;
+    border: none;
+    padding: 8px 22px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(37,99,235,0.06);
+  }
+  button:hover:not(:disabled) {
+    background: #1742a0;
+    color: #fff;
+  }
+  button:disabled {
+    background: #e5e7eb;
+    color: #b0b6be;
+  }
+  .ess-power-on {
+    background: var(--success);
+  }
+  .ess-power-off {
+    background: var(--danger);
+  }
+  .ess-power-on:hover {
+    background: #15803d;
+  }
+  .ess-power-off:hover {
+    background: #b91c1c;
+  }
+  .device-data {
+    font-size: 1.5em;
+    margin-top: 8px;
+    color: var(--text-main);
+    font-weight: bold;
+  }
+  .device-data div {
+    margin-bottom: 8px;
+  }
+  .device-data i {
+    color: var(--primary);
+    margin-right: 8px;
+  }
+  .info-bar {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 1em;
+    border-top: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+    font-family: var(--font-main);
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    z-index: 100;
+    padding: 0 24px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  #network-status-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 1px solid #fff;
+    margin-right: 6px;
+  }
+  #weather-block {
+    color: var(--primary);
+    font-size: 1em;
+    font-weight: 500;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .response-message {
+    font-size: 1.5em;
+    color: #0067b1; /* 緯創藍 */
+    font-weight: bold;
+    margin-left: 24px;
+    display: inline-block;
+  }
+  @media (max-width: 900px) {
+    html, body { font-size: 18px; }
+    .container {
+      grid-template-columns: 1fr;
+      padding: 12px;
+      gap: 12px;
+    }
+    nav {
+      font-size: 1em;
+      padding: 0 8px;
+      height: 48px;
+    }
+    .nav-title {
+      font-size: 1.2em;
+      margin-right: 10px;
+    }
+    .device-card {
+      padding: 12px 8px 8px 12px;
+      border-radius: 10px;
+    }
+    .device-card h3 {
+      font-size: 1.5em;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .control-group {
+      gap: 8px;
+      margin-top: 8px;
+    }
+  }
+
+  #settings-form label {
+    font-size: 1.3em;
+    color: #0d47a1;
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+  }
+  #settings-form input[type="text"],
+  #settings-form input[type="number"] {
+    font-size: 1.2em;
+    color: #222B45;
+    background: #e3f2fd;
+    border: 1.5px solid #1976d2;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+  }
+  #settings-form input[type="text"]:focus,
+  #settings-form input[type="number"]:focus {
+    outline: 2px solid #1976d2;
+    background: #fff;
+  }
+  #settings-form h4 {
+    font-size: 1.15em;
+    color: #1976d2;
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+  #save-settings-btn {
+    font-size: 1.3em;
+    padding: 10px 32px;
+    border-radius: 8px;
+    font-weight: bold;
+    background: #1976d2;
+    color: #fff;
+    margin-top: 24px;
+  }
+  #save-settings-btn:hover {
+    background: #1251a3;
+  }
+  #device-settings-container {
+    gap: 28px;
+  }
+  @media (max-width: 900px) {
+    #settings-form label { font-size: 1.1em; }
+    #settings-form input { font-size: 1em; }
+    #save-settings-btn { font-size: 1.1em; }
+  }
+
+  #alerts {
+    height: calc(100vh - 56px - 38px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    padding-top: 0px;
+    padding-bottom: 0px; /* 距離底部300px */
+  }
+  #alerts .container {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  #device-alerts,
+  #device-log {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* 讓卡片不超出頁面 */
+    max-height: 100%;
+    box-sizing: border-box;
+  }
+  #alert-messages,
+  #log-messages {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    /* 讓內容可捲動 */
+  }
+
+  #overview, #device-control, #alerts, #settings {
+  min-height: calc(100vh - 56px - 150px);
+  box-sizing: border-box;
+  padding-bottom: 50px; /* 預留訊息列高度，避免卡片被裁切 */
+}
+.info-bar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  z-index: 100;
+}
+  </style>
+  <script src="https://alcdn.msauth.net/browser/2.28.3/js/msal-browser.min.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-title">
+      <i class="fa fa-wing" style="margin-right:10px;color:#61dafb;"></i>aiSails
+    </div>
+    <div class="nav-menu">
+      <button class="nav-button" onclick="navigateTo('overview')">
+        <i class="fa fa-desktop"></i> Overview
+      </button>
+      <button class="nav-button" onclick="navigateTo('device-control')">
+        <i class="fa fa-sliders"></i> Control
+      </button>
+      <button class="nav-button" onclick="navigateTo('alerts')">
+        <i class="fa fa-bell"></i> Alerts
+      </button>
+      <button class="nav-button" onclick="navigateTo('settings')">
+        <i class="fa fa-cog"></i> Settings
+      </button>
+    </div>
+    <span style="flex:1;"></span>
+      <span style="margin-right:24px;"><i class="fa fa-exclamation-triangle" style="color:#ffc107;"></i> <span id="alert-count">0</span></span>
+      <span style="margin-right:24px;"><i class="fa fa-user"></i> <span id="current-user">Logout</span></span>
+        <button class="nav-button nav-help-btn" onclick="navigateTo('help')" aria-label="Help">
+      <i class="fa fa-question-circle"></i>
+    </button>
+  </nav>
+
+  <script>
+// 全域設備清單
+const devices = ["sbms", "diesel", "pcs", "pn14"];
+let msalInstance;
+let alertCount = 0; // 新增警告計數變數
+
+// 取得目前電腦使用者名稱（僅限支援的瀏覽器/環境，否則顯示 Unknown）
+function getLocalUserName() {
+  if (window.navigator.userAgentData && window.navigator.userAgentData.platform) {
+    return window.navigator.userAgentData.platform;
+  }
+  // 嘗試從環境變數取得（僅限 Electron/Node.js 環境）
+  if (window.process && window.process.env && window.process.env.USERNAME) {
+    return window.process.env.USERNAME;
+  }
+  // Edge/IE 專屬 ActiveXObject（僅限 Intranet/IE，現代瀏覽器不支援）
+  try {
+    // @ts-ignore
+    var network = new ActiveXObject('WScript.Network');
+    if (network && network.UserName) return network.UserName;
+  } catch (e) {}
+  // 其他方式皆不可行時
+  return "Unknown";
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // 從後端獲取 MSAL 配置
+    const response = await fetch('/aad-config');
+    const { clientId, authority, redirectUri } = await response.json();
+    msalInstance = new msal.PublicClientApplication({
+      auth: { clientId, authority, redirectUri }
+    });
+    // 進入網頁時自動啟動 MSAL 登入
+    try {
+      const loginResponse = await msalInstance.loginPopup({ scopes: ["User.Read"] });
+      const account = loginResponse.account;
+      document.getElementById('current-user').textContent = account.username || account.name;
+      updateLoginStatus(true);
+    } catch (error) {
+      console.error("Logon failed:", error);
+      updateLoginStatus(false, '登入失敗');
+    }
+  } catch (error) {
+    console.error('Cannot fetch AAD configuration:', error);
+  }
+
+  // 初始化設備設定表單
+  const container = document.getElementById('device-settings-container');
+  if (container && container.childElementCount === 0) {
+    devices.forEach(device => {
+      const deviceDiv = document.createElement('div');
+      deviceDiv.innerHTML = `
+        <h4>${device.toUpperCase()}</h4>
+        <label for="${device}-ip">IP:</label>
+        <input type="text" id="${device}-ip" name="${device}-ip" placeholder="input IP address">
+        <label for="${device}-port">Port:</label>
+        <input type="number" id="${device}-port" name="${device}-port" placeholder="input Port">
+      `;
+      container.appendChild(deviceDiv);
+    });
+  }
+
+  // 從後端API獲取設備配置
+  try {
+    const response = await fetch('/load-config');
+    const config = await response.json();
+    document.getElementById('overview-ip').value = config.overview?.overview_ip || '';
+    devices.forEach(device => {
+      document.getElementById(`${device}-ip`).value = config.devices?.[`${device}_ip`] || '';
+      document.getElementById(`${device}-port`).value = config.devices?.[`${device}_port`] || '';
+    });
+  } catch (error) {
+    console.error('無法載入設備配置:', error);
+  }
+
+  // 頁面切換初始化
+  document.querySelectorAll('section').forEach(section => {
+    section.style.display = 'none';
+  });
+  document.getElementById('overview').style.display = 'block';
+  resizeOverviewIframe();
+  updateWeatherInfo();
+  fetchDeviceStatus();
+  setInterval(fetchDeviceStatus, 6000); // 每秒鐘自動刷新設備狀態
+
+  // 設定目前電腦使用者帳號名
+  document.getElementById('current-user').textContent = getLocalUserName();
+});
+
+function updateLoginStatus(isLoggedIn, errorMsg = '') {
+  const loginButton = document.getElementById('login-button');
+  const currentUser = document.getElementById('current-user');
+  if (isLoggedIn) {
+    loginButton.textContent = "Logout";
+    loginButton.onclick = handleLogout;
+    currentUser.style.color = '#1976d2';
+    currentUser.textContent = currentUser.textContent || '已登入';
+  } else {
+    loginButton.textContent = "logon";
+    loginButton.onclick = handleLogin;
+    currentUser.style.color = '#F14C4C';
+    currentUser.textContent = errorMsg ? errorMsg : '未登入';
+  }
+}
+
+async function handleLogin() {
+  const loginButton = document.getElementById('login-button');
+  loginButton.disabled = true;
+  loginButton.style.cursor = 'wait';
+  try {
+    const loginResponse = await msalInstance.loginPopup({ scopes: ["User.Read"] });
+    const account = loginResponse.account;
+    document.getElementById('current-user').textContent = account.username || account.name;
+    updateLoginStatus(true);
+  } catch (error) {
+    console.error("Logon failed:", error);
+    updateLoginStatus(false, '登入失敗');
+    alert("Logon failed, please try again!");
+  } finally {
+    loginButton.disabled = false;
+    loginButton.style.cursor = 'pointer';
+  }
+}
+
+async function handleLogout() {
+  const loginButton = document.getElementById('login-button');
+  loginButton.disabled = true;
+  loginButton.style.cursor = 'wait';
+  try {
+    await msalInstance.logoutPopup();
+    document.getElementById('current-user').textContent = 'Logged out';
+    updateLoginStatus(false);
+  } catch (error) {
+    console.error("Logout failed:", error);
+    updateLoginStatus(false, '登出失敗');
+    alert("Log out failed, please try again!");
+  } finally {
+    loginButton.disabled = false;
+    loginButton.style.cursor = 'pointer';
+  }
+}
+
+function navigateTo(page) {
+  document.querySelectorAll('section').forEach(section => {
+    section.style.display = 'none';
+  });
+  document.getElementById(page).style.display = 'block';
+  document.querySelectorAll('.nav-button').forEach(button => {
+    button.classList.remove('active');
+  });
+  // 根據 page 名稱高亮對應按鈕
+  const navMap = {
+    'overview': '系統狀況',
+    'device-control': '設備控制',
+    'alerts': '系統告警',
+    'settings': '參數設定',
+    'help': '幫助'
+  };
+  const activeButton = Array.from(document.querySelectorAll('.nav-button')).find(button => button.textContent.includes(navMap[page]));
+  if (activeButton) activeButton.classList.add('active');
+}
+
+function resizeOverviewIframe() {
+  const nav = document.querySelector('nav');
+  const infoBar = document.querySelector('.info-bar');
+  const iframe = document.getElementById('overview-iframe');
+  const navHeight = nav ? nav.offsetHeight : 0;
+  const infoBarHeight = infoBar ? infoBar.offsetHeight : 0;
+  const availableHeight = window.innerHeight - navHeight - infoBarHeight;
+  if (iframe) iframe.style.height = availableHeight + 'px';
+}
+window.addEventListener('resize', resizeOverviewIframe);
+
+async function updateWeatherInfo() {
+  try {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+      const data = await response.json();
+      const locationName = data.name || '';
+      const weatherDescription = data.weather[0].description;
+      const temperature = data.main.temp;
+      const windSpeed = data.wind.speed;
+      const windDeg = data.wind.deg;
+      const icon = data.weather[0].icon;
+      // 風向中文
+      let windDir = '--';
+      if (typeof windDeg === 'number') {
+        const dirs = ['北', '北北東', '東北', '東北東', '東', '東南東', '東南', '南南東', '南', '南南西', '西南', '西南西', '西', '西北西', '西北', '北北西', '北'];
+        windDir = dirs[Math.round(windDeg / 22.5) % 16];
+      }
+      // 簡化天氣資訊顯示在訊息列中，使用 span 元素分隔各部分
+      document.getElementById('weather-block').innerHTML =
+        `<img src="https://openweathermap.org/img/wn/${icon}.png" alt="天氣圖標"/>
+         <span>${locationName ? locationName : '未知地點'}</span>
+         <span>${weatherDescription}</span>
+         <span>${temperature.toFixed(1)}°C</span>
+         <span>風速: ${windSpeed}m/s</span>
+         <i class="fa fa-arrow-up" style="transform: rotate(${windDeg}deg); margin: 0 30px;"></i>`;
+    }, (error) => {
+      document.getElementById('weather-block').textContent = '無法取得天氣';
+    });
+  } catch (error) {
+    document.getElementById('weather-block').textContent = '天氣載入失敗';
+  }
+}
+setInterval(updateWeatherInfo, 300000);
+
+const API_BASE = "/control";
+const STATUS_API = "/status";
+
+async function fetchDeviceStatus() {
+  try {
+    const response = await fetch(STATUS_API);
+    const data = await response.json();
+    updateDeviceStatus(data.devices);
+  } catch (error) {
+    console.error("Failed to fetch device status:", error);
+  }
+}
+
+function updateDeviceStatus(devicesStatus) {
+  for (const [key, device] of Object.entries(devicesStatus)) {
+    const card = document.getElementById(`device-${key}`);
+    if (!card) continue;
+    const buttons = card.querySelectorAll("button");
+    const name = card.querySelector("h3");
+    if (device.connected) {
+      name.style.color = "#007ACC";
+      buttons.forEach(button => {
+        button.disabled = false;
+        button.classList.remove("disabled");
+        button.style.cursor = "pointer";
+      });
+    } else {
+      name.style.color = "#F14C4C";
+      buttons.forEach(button => {
+        button.disabled = true;
+        button.classList.add("disabled");
+        button.style.cursor = "not-allowed";
+      });
+    }
+  }
+
+  // SBMS 設備訊息
+  document.getElementById('sbms-voltage').textContent = devicesStatus.sbms?.voltage ?? '--';
+  document.getElementById('sbms-current').textContent = devicesStatus.sbms?.current ?? '--';
+  document.getElementById('sbms-temp').textContent = devicesStatus.sbms?.temperature ?? '--';
+  document.getElementById('sbms-status').textContent = devicesStatus.sbms?.active ? 'Active' : 'Inactive';
+  document.getElementById('battery-level').textContent = `${devicesStatus.sbms?.soc ?? '--'}%`;
+  
+  // 如果有UPS和空調的元素，也更新它們
+  if (document.getElementById('ups-status')) {
+    document.getElementById('ups-status').textContent = 'Normal';
+    document.getElementById('ups-voltage').textContent = devicesStatus.sbms?.voltage ?? '--';
+    document.getElementById('ups-load').textContent = '50';
+  }
+  
+  if (document.getElementById('ac-status')) {
+    document.getElementById('ac-status').textContent = 'Running';
+    document.getElementById('ac-temp').textContent = '25';
+    document.getElementById('ac-mode').textContent = 'Cooling';
+  }
+
+  // 頻率顯示到小數點第二位
+  let freq = devicesStatus.pcs?.frequency;
+  document.getElementById('pcs-frequency').textContent = (typeof freq === 'number' ? freq.toFixed(2) : '--');
+
+  // 控制頻率調整按鈕啟用/禁用
+  const freqDownBtn = document.getElementById('pcs-freq-down');
+  const freqUpBtn = document.getElementById('pcs-freq-up');
+  if (devicesStatus.pcs?.connected) {
+    // 連線時才根據頻率啟用/禁用
+    if (typeof freq === 'number') {
+      if (freq <= 59.77) {
+        freqDownBtn.disabled = true;
+        freqDownBtn.classList.add('disabled');
+        freqDownBtn.style.cursor = "not-allowed";
+      } else {
+        freqDownBtn.disabled = false;
+        freqDownBtn.classList.remove('disabled');
+        freqDownBtn.style.cursor = "pointer";
+      }
+      if (freq >= 60.00) {
+        freqUpBtn.disabled = true;
+        freqUpBtn.classList.add('disabled');
+        freqUpBtn.style.cursor = "not-allowed";
+      } else {
+        freqUpBtn.disabled = false;
+        freqUpBtn.classList.remove('disabled');
+        freqUpBtn.style.cursor = "pointer";
+      }
+    }
+  } else {
+    // 未連線時全部禁用
+    freqDownBtn.disabled = true;
+    freqDownBtn.classList.add('disabled');
+    freqDownBtn.style.cursor = "not-allowed";
+    freqUpBtn.disabled = true;
+    freqUpBtn.classList.add('disabled');
+    freqUpBtn.style.cursor = "not-allowed";
+  }
+
+  // Diesel 設備訊息 - 更新所有柴油發電機相關數據
+  document.getElementById('diesel-power').textContent = devicesStatus.diesel?.power ?? '--';
+  document.getElementById('diesel-fuel').textContent = devicesStatus.diesel?.fuel ?? '--';
+  document.getElementById('diesel-temp').textContent = devicesStatus.diesel?.temperature ?? '--';
+  document.getElementById('diesel-status').textContent = devicesStatus.diesel?.status ?? '--';
+  
+  // 更新柴油發電機子卡片的詳細信息
+  if (document.getElementById('diesel-frequency')) {
+    document.getElementById('diesel-frequency').textContent = devicesStatus.diesel?.frequency ?? '--';
+  }
+  if (document.getElementById('diesel-oilpressure')) {
+    document.getElementById('diesel-oilpressure').textContent = devicesStatus.diesel?.oilpressure ?? '--';
+  }
+  if (document.getElementById('diesel-coolertemperature')) {
+    document.getElementById('diesel-coolertemperature').textContent = devicesStatus.diesel?.coolertemperature ?? '--';
+  }
+  if (document.getElementById('diesel-l1power')) {
+    document.getElementById('diesel-l1power').textContent = devicesStatus.diesel?.l1power ?? '--';
+  }
+  if (document.getElementById('diesel-l2power')) {
+    document.getElementById('diesel-l2power').textContent = devicesStatus.diesel?.l2power ?? '--';
+  }
+  if (document.getElementById('diesel-l3power')) {
+    document.getElementById('diesel-l3power').textContent = devicesStatus.diesel?.l3power ?? '--';
+  }
+  if (document.getElementById('diesel-l1voltage')) {
+    document.getElementById('diesel-l1voltage').textContent = devicesStatus.diesel?.l1l2voltage ?? '--';
+  }
+  if (document.getElementById('diesel-l2voltage')) {
+    document.getElementById('diesel-l2voltage').textContent = devicesStatus.diesel?.l2l3voltage ?? '--';
+  }
+  if (document.getElementById('diesel-l3voltage')) {
+    document.getElementById('diesel-l3voltage').textContent = devicesStatus.diesel?.l3l1voltage ?? '--';
+  }
+  if (document.getElementById('diesel-l1current')) {
+    document.getElementById('diesel-l1current').textContent = devicesStatus.diesel?.l1current ?? '--';
+  }
+  if (document.getElementById('diesel-l2current')) {
+    document.getElementById('diesel-l2current').textContent = devicesStatus.diesel?.l2current ?? '--';
+  }
+  if (document.getElementById('diesel-l3current')) {
+    document.getElementById('diesel-l3current').textContent = devicesStatus.diesel?.l3current ?? '--';
+  }
+  if (document.getElementById('diesel-batteryvoltage')) {
+    document.getElementById('diesel-batteryvoltage').textContent = devicesStatus.diesel?.batteryvoltage ?? '--';
+  }
+  if (document.getElementById('diesel-chargemagneticvoltage')) {
+    document.getElementById('diesel-chargemagneticvoltage').textContent = devicesStatus.diesel?.chargemagneticvoltage ?? '--';
+  }
+  // PCS 資訊顯示
+  document.getElementById('pcs-voltage').textContent = devicesStatus.pcs?.dcvoltage ?? '--';
+  document.getElementById('pcs-current').textContent = devicesStatus.pcs?.current ?? '--';
+  document.getElementById('pcs-status').textContent = devicesStatus.pcs?.pcsstatus ?? '--';
+  document.getElementById('pcs-activepower').textContent = devicesStatus.pcs?.power ?? '--';
+  document.getElementById('pcs-reactivepower').textContent = devicesStatus.pcs?.reactivepower ?? '--';
+  document.getElementById('pcs-load').textContent = devicesStatus.pcs?.load ?? '--';
+  document.getElementById('pcs-temp').textContent = devicesStatus.pcs?.temperature ?? '--';
+  document.getElementById('pcs-connected').textContent = devicesStatus.pcs?.connected ? '連線' : '離線';
+  document.getElementById('pcs-operationmode').textContent = devicesStatus.pcs?.operationmode ?? '--';
+  document.getElementById('pcs-pcsstatus').textContent = devicesStatus.pcs?.pcsstatus ?? '--';
+  document.getElementById('pcs-gridstatus').textContent = devicesStatus.pcs?.gridstatus ?? '--';
+  document.getElementById('pcs-supplyfrequency').textContent = devicesStatus.pcs?.supplyfrequency ?? '--';
+  document.getElementById('pcs-dcvoltage').textContent = devicesStatus.pcs?.dcvoltage ?? '--';
+  document.getElementById('pcs-fault').textContent = devicesStatus.pcs?.fault ?? '--';
+  document.getElementById('pcs-linevoltage').textContent = devicesStatus.pcs?.linevoltage ?? '--';
+  document.getElementById('pcs-linefrequency').textContent = devicesStatus.pcs?.linefrequency ?? '--';
+
+  // PN14 設備訊息
+  document.getElementById('pn14-wind').textContent = devicesStatus.pn14?.wind ?? '--';
+  document.getElementById('pn14-force').textContent = devicesStatus.pn14?.force ?? '--';
+  document.getElementById('pn14-status').textContent = devicesStatus.pn14?.status ?? '--';
+
+  // 網路狀態顯示 global_status，並依狀態顯示燈號與文字
+  const networkStatusText = document.getElementById('network-status');
+  const networkIndicator = document.getElementById('network-status-indicator');
+  if (devicesStatus?.global_status)  {
+    networkIndicator.style.background = '#52c41a'; // 綠色
+    networkStatusText.textContent = 'Good';
+   } else {
+    networkIndicator.style.background = '#ffc107'; // 黃色
+    networkStatusText.textContent = 'Not Good';
+  }
+
+  // 更新設備連接狀態圖標
+  // SBMS
+  if (devicesStatus.sbms?.connected) {
+    document.getElementById('sbms-status-icon').style.display = '';
+    document.getElementById('sbms-disconnect-icon').style.display = 'none';
+  } else {
+    document.getElementById('sbms-status-icon').style.display = 'none';
+    document.getElementById('sbms-disconnect-icon').style.display = '';
+  }
+  // Diesel
+  if (devicesStatus.diesel?.connected) {
+    document.getElementById('diesel-status-icon').style.display = '';
+    document.getElementById('diesel-disconnect-icon').style.display = 'none';
+  } else {
+    document.getElementById('diesel-status-icon').style.display = 'none';
+    document.getElementById('diesel-disconnect-icon').style.display = '';
+  }
+  // PN14
+  if (devicesStatus.pn14?.connected) {
+    document.getElementById('pn14-status-icon').style.display = '';
+    document.getElementById('pn14-disconnect-icon').style.display = 'none';
+  } else {
+    document.getElementById('pn14-status-icon').style.display = 'none';
+    document.getElementById('pn14-disconnect-icon').style.display = '';
+  }
+
+  }
+
+async function sendCommand(device, action) {
+  const responseMessage = document.getElementById("response-message");
+  const buttons = document.querySelectorAll("button");
+  // 禁用所有按鈕，顯示 loading 狀態
+  buttons.forEach(button => {
+    button.disabled = true;
+    button.style.cursor = "wait";
+  });
+  responseMessage.textContent = '執行中...';
+  responseMessage.className = "response-message";
+  responseMessage.style.display = "block";
+  // 添加時間戳記
+  const timestamp = new Date().toLocaleTimeString();
+  const commandMessage = `[${timestamp}] 執行命令: ${device} ${action}`;
+  
+  // 將命令添加到執行紀錄中
+  const logDiv = document.getElementById("log-messages");
+  if (logDiv) {
+    const newLogEntry = document.createElement("div");
+    newLogEntry.textContent = commandMessage;
+    newLogEntry.style.borderBottom = "1px solid #e0eaf2";
+    newLogEntry.style.paddingBottom = "6px";
+    newLogEntry.style.marginBottom = "6px";
+    logDiv.insertBefore(newLogEntry, logDiv.firstChild);
+  }
+  
+  try {
+    const response = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device, action })
+    });
+    const result = await response.json();
+    if (response.ok) {
+      responseMessage.textContent = result.message || "Successful";
+      responseMessage.className = "response-message response-success";
+      
+      // 將成功結果添加到執行紀錄中
+      if (logDiv) {
+        const resultLogEntry = document.createElement("div");
+        resultLogEntry.textContent = `[${new Date().toLocaleTimeString()}] 執行結果: ${result.message || "成功"}`;
+        resultLogEntry.style.color = "#52c41a";
+        resultLogEntry.style.borderBottom = "1px solid #e0eaf2";
+        resultLogEntry.style.paddingBottom = "6px";
+        resultLogEntry.style.marginBottom = "6px";
+        logDiv.insertBefore(resultLogEntry, logDiv.firstChild);
+      }
+    } else {
+      responseMessage.textContent = result.error || "Failed";
+      responseMessage.className = "response-message response-error";
+      
+      // 將失敗結果添加到執行紀錄中
+      if (logDiv) {
+        const errorLogEntry = document.createElement("div");
+        errorLogEntry.textContent = `[${new Date().toLocaleTimeString()}] 執行失敗: ${result.error || "未知錯誤"}`;
+        errorLogEntry.style.color = "#F14C4C";
+        errorLogEntry.style.borderBottom = "1px solid #e0eaf2";
+        errorLogEntry.style.paddingBottom = "6px";
+        errorLogEntry.style.marginBottom = "6px";
+        logDiv.insertBefore(errorLogEntry, logDiv.firstChild);
+      }
+    }
+  } catch (error) {
+    responseMessage.textContent = "Unable to connect to the backend service";
+    responseMessage.className = "response-message response-error";
+    console.error("Error sending command:", error);
+    
+    // 將連接錯誤添加到執行紀錄中
+    if (logDiv) {
+      const connectionErrorEntry = document.createElement("div");
+      connectionErrorEntry.textContent = `[${new Date().toLocaleTimeString()}] 連接錯誤: 無法連接到後端服務`;
+      connectionErrorEntry.style.color = "#F14C4C";
+      connectionErrorEntry.style.borderBottom = "1px solid #e0eaf2";
+      connectionErrorEntry.style.paddingBottom = "6px";
+      connectionErrorEntry.style.marginBottom = "6px";
+      logDiv.insertBefore(connectionErrorEntry, logDiv.firstChild);
+    }
+  } finally {
+    // 完全執行完畢後才啟用所有按鈕
+    buttons.forEach(button => {
+      button.disabled = false;
+      button.style.cursor = "pointer";
+    });
+  }
+  responseMessage.style.display = "block";
+  setTimeout(() => {
+    responseMessage.style.display = "none";
+  }, 5000);
+}
+
+async function saveSettings() {
+  const saveBtn = document.getElementById('save-settings-btn');
+  saveBtn.disabled = true;
+  saveBtn.style.cursor = 'wait';
+  saveBtn.textContent = '儲存中...';
+  const formData = new FormData(document.getElementById('settings-form'));
+  // 構造正確格式
+  const config = {
+    overview: {
+      overview_ip: formData.get('overview-ip')
+    },
+    devices: {}
+  };
+  devices.forEach(device => {
+    config.devices[`${device}_ip`] = formData.get(`${device}-ip`);
+    config.devices[`${device}_port`] = formData.get(`${device}-port`);
+  });
+  try {
+    const response = await fetch('/save-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
+    });
+    if (response.ok) {
+      alert('Settings saved successfully!');
+    } else {
+      alert('Settings failed to save!');
+    }
+  } catch (error) {
+    console.error('Error occurred while saving settings:', error);
+    alert('An error occurred while saving settings!');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.style.cursor = 'pointer';
+    saveBtn.innerHTML = '<i class="fa fa-save" style="margin-right:8px;"></i>SAVE';
+  }
+}
+
+// 取得執行紀錄log並顯示於alerts頁
+async function fetchLogs() {
+  try {
+    const response = await fetch('/logs');
+    const logs = await response.json();
+    const logDiv = document.getElementById('log-messages');
+    if (logDiv) {
+      logDiv.innerHTML = logs.map(msg => `<div style="padding: 8px 0; border-bottom: 1px solid #e0eaf2;">${msg}</div>`).join('');
+      logDiv.scrollTop = 0; // 滾動到頂部，顯示最新日誌
+    }
+  } catch (e) {
+    console.error('Error fetching logs:', e);
+  }
+}
+setInterval(fetchLogs, 3000);
+document.addEventListener('DOMContentLoaded', fetchLogs);
+  </script>
+
+  <section id="overview">
+    <iframe id="overview-iframe" src="http://192.168.127.246/#/" style="width:100%; height:100%; min-height:400px; border:none; display:block;"></iframe> 
+  </section>
+
+
+
+
+
+  <section id="device-control" style="overflow-y: auto; height: calc(100vh - 38px); padding-bottom: 48px;">
+    <div class="container" style="padding-bottom: 0;">
+      <div class="device-card" id="device-sbms" style="display: flex; flex-direction: row; min-height: 0; justify-content: flex-start;">
+        <div style="flex:1; display: flex; flex-direction: column; position:relative;">
+          <div style="display:flex; align-items:flex-start;">
+            <h3><i class="fa fa-battery-full"></i> ESS </h3>
+          </div>
+          <div class="control-group">
+            <button class="ess-power-on" onclick="sendCommand('sbms', 'power_on_sbms')">On</button>
+            <button class="ess-power-off" onclick="sendCommand('sbms', 'power_off_sbms')">Off</button>
+          </div>
+          <div style="margin:8px 0 0 0;" class="device-data">
+            <div><i class="fa fa-bolt"></i> <span id="sbms-voltage">--</span> V</div>
+            <div><i class="fa fa-charging-station"></i> <span id="sbms-current">--</span> A</div>
+            <div><i class="fa fa-temperature-half"></i> <span id="sbms-temp">--</span> °C</div>
+            <div><i class="fa fa-circle-info"></i> <span id="sbms-status">--</span></div>
+          </div>
+          <!-- 新增下方子卡片區塊 -->
+          <div style="display:flex; flex-direction:row; gap:5px; margin-top:5px; width:100%; align-items: flex-start;">
+            <!-- UPS 子卡片 -->
+            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-plug"></i> UPS</div>
+              <div style="font-size:1em; color:#333;">狀態: <span id="ups-status">--</span></div>
+              <div style="font-size:1em; color:#333;">電壓: <span id="ups-voltage">--</span> V</div>
+              <div style="font-size:1em; color:#333;">負載: <span id="ups-load">--</span> %</div>
+            </div>
+            <!-- 空調 子卡片 -->
+            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-snowflake"></i> 空調</div>
+              <div style="font-size:1em; color:#333;">狀態: <span id="ac-status">--</span></div>
+              <div style="font-size:1em; color:#333;">溫度: <span id="ac-temp">--</span> °C</div>
+              <div style="font-size:1em; color:#333;">模式: <span id="ac-mode">--</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-info-panel" style="flex:1; padding-left:24px; display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:0; box-sizing:border-box;">
+          <!-- PCS 子卡片 -->
+          <div class="device-card" style="margin-top:0; background:#f7faff; box-shadow:0 1px 4px rgba(0,51,102,0.06); border:1px solid #e0eaf2; border-radius:10px; padding:20px; width:100%; max-width:unset; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start;">
+            <div style="font-size:1.3em; font-weight:bold; color:#007ACC; margin-bottom:8px;">
+              PCS 頻率控制(Hz)
+            </div>
+            <div id="pcs-frequency" style="font-size:4.4em; font-weight:bold; color:#007ACC; min-width:auto; margin-bottom:10px;">--</div>
+            <div style="display:flex; flex-direction:row; gap:18px; justify-content:center; margin-bottom:10px;">
+              <button id="pcs-freq-down" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#F14C4C;"
+                onclick="sendCommand('pcs', 'pcs_freq_down')">
+                <i class="fa fa-minus"></i>
+              </button>
+              <button id="pcs-freq-reset" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#222;"
+                onclick="sendCommand('pcs', 'pcs_freq_reset')">
+                <i class="fa fa-rotate-right"></i>
+              </button>
+              <button id="pcs-freq-up" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#52c41a;"
+                onclick="sendCommand('pcs', 'pcs_freq_up')">
+                <i class="fa fa-plus"></i>
+              </button>
+            </div>
+            <div id="pcs-freq-progress-bar-container" style="width:180px;height:18px;background:#e0e0e0;border-radius:9px;overflow:hidden;display:none;margin:8px 0;">
+              <div id="pcs-freq-progress-bar" style="height:100%;width:0%;background:#1976d2;transition:width 0.2s;"></div>
+            </div>
+            <div style="margin-top:10px; font-size:1.1em; color:#222; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div><i class="fa fa-bolt"></i> 電壓: <span id="pcs-voltage">--</span> V</div>
+              <div><i class="fa fa-charging-station"></i> 電流: <span id="pcs-current">--</span> A</div>
+              <div><i class="fa fa-circle-info"></i> 狀態: <span id="pcs-status">--</span></div>
+              <div><i class="fa fa-battery-half"></i> 有效功率: <span id="pcs-activepower">--</span> kW</div>
+              <div><i class="fa fa-battery-full"></i> 無效功率: <span id="pcs-reactivepower">--</span> kVar</div>
+              <div><i class="fa fa-percent"></i> 負載: <span id="pcs-load">--</span> %</div>
+              <div><i class="fa fa-thermometer-half"></i> 溫度: <span id="pcs-temp">--</span> °C</div>
+              <div><i class="fa fa-link"></i> 連線狀態: <span id="pcs-connected">--</span></div>
+              <div><i class="fa fa-cogs"></i> 運行模式: <span id="pcs-operationmode">--</span></div>
+              <div><i class="fa fa-cogs"></i> PCS 狀態: <span id="pcs-pcsstatus">--</span></div>
+              <div><i class="fa fa-cogs"></i> Grid 狀態: <span id="pcs-gridstatus">--</span></div>
+              <div><i class="fa fa-bolt"></i> 供應頻率: <span id="pcs-supplyfrequency">--</span> Hz</div>
+              <div><i class="fa fa-bolt"></i> DC 電壓: <span id="pcs-dcvoltage">--</span> V</div>
+              <div><i class="fa fa-exclamation-triangle"></i> 故障: <span id="pcs-fault">--</span></div>
+              <div><i class="fa fa-bolt"></i> 線電壓: <span id="pcs-linevoltage">--</span> V</div>
+              <div><i class="fa fa-bolt"></i> 線頻率: <span id="pcs-linefrequency">--</span> Hz</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="device-card" id="device-diesel" style="display: flex; flex-direction: column;">
+        <div style="flex:1; display: flex; flex-direction: column;">
+          <h3><i class="fa fa-industry"></i> Diesel Generator </h3>
+          <div class="control-group">
+            <!-- 滑動開關，按鈕內顯示命令名稱 -->
+            <label class="switch-diesel-cmd">
+              <input type="checkbox" id="diesel-toggle-switch" onchange="toggleDieselSwitchCmd()">
+              <span class="slider-diesel-cmd">
+                <span class="diesel-io-label diesel-i">I</span>
+                <span class="diesel-io-label diesel-o">O</span>
+              </span>
+            </label>
+          </div>
+        </div>
+        <!-- 新增一張子卡片，平均分配所有訊息 -->
+        <div style="display: flex; flex-direction: row; gap: 5px; width: 100%; margin-top: 5px;">
+          <!-- 子卡片1 -->
+          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-circle-info"></i> 狀態</div>
+            <div style="font-size:1em; color:#333;">狀態: <span id="diesel-status">--</span></div>
+            <div style="font-size:1em; color:#333;">頻率: <span id="diesel-frequency">--</span> Hz</div>
+            <div style="font-size:1em; color:#333;">油壓: <span id="diesel-oilpressure">--</span></div>
+            <div style="font-size:1em; color:#333;">冷卻溫度: <span id="diesel-coolertemperature">--</span> °C</div>
+            <div style="font-size:1em; color:#333;">燃料: <span id="diesel-fuel">--</span></div>
+          </div>
+          <!-- 子卡片2 -->
+          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-bolt"></i> 電力</div>
+            <div style="font-size:1em; color:#333;">L1功率: <span id="diesel-l1power">--</span> kW</div>
+            <div style="font-size:1em; color:#333;">L2功率: <span id="diesel-l2power">--</span> kW</div>
+            <div style="font-size:1em; color:#333;">L3功率: <span id="diesel-l3power">--</span> kW</div>
+            <div style="font-size:1em; color:#333;">L1電壓: <span id="diesel-l1voltage">--</span> V</div>
+            <div style="font-size:1em; color:#333;">L2電壓: <span id="diesel-l2voltage">--</span> V</div>
+            <div style="font-size:1em; color:#333;">L3電壓: <span id="diesel-l3voltage">--</span> V</div>
+            <div style="font-size:1em; color:#333;">L1電流: <span id="diesel-l1current">--</span> A</div>
+            <div style="font-size:1em; color:#333;">L2電流: <span id="diesel-l2current">--</span> A</div>
+            <div style="font-size:1em; color:#333;">L3電流: <span id="diesel-l3current">--</span> A</div>
+          </div>
+          <!-- 子卡片3 -->
+          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-battery-full"></i> 其他</div>
+            <div style="font-size:1em; color:#333;">電池電壓: <span id="diesel-batteryvoltage">--</span> V</div>
+            <div style="font-size:1em; color:#333;">磁場電壓: <span id="diesel-chargemagneticvoltage">--</span> V</div>
+            <div style="font-size:1em; color:#333;">溫度: <span id="diesel-temp">--</span></div>
+            <div style="font-size:1em; color:#333;">功率: <span id="diesel-power">--</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="device-card" id="device-pn14" style="display: flex; flex-direction: column; min-height: 0; justify-content: flex-start; position:relative; overflow:hidden;">
+        <video autoplay loop muted playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:0;">
+          <source src="../static/fly.mp4" type="video/mp4">
+        </video>
+        <div style="position:relative; z-index:1; width:100%; height:100%;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3><i class="fa fa-fan"></i> SkySails PN14</h3>
+            <span class="status-indicator">
+              <i class="fa fa-link" id="pn14-status-icon" style="color:#0091FF;display:none;"></i>
+              <i class="fa fa-unlink" id="pn14-disconnect-icon" style="color:#F14C4C;display:none;"></i>
+            </span>
+          </div>
+          <!-- 子卡片區塊 -->
+          <div style="display:flex; flex-direction:row; gap:5px; margin-top:5px; width:100%; align-items: flex-start;">
+            <!-- 風速子卡片 -->
+            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-wind"></i> 風速</div>
+              <div style="font-size:1em; color:#333;">風速: <span id="pn14-wind">--</span> m/s</div>
+            </div>
+            <!-- 拉力子卡片 -->
+            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-arrow-up"></i> 拉力</div>
+              <div style="font-size:1em; color:#333;">拉力: <span id="pn14-force">--</span> N</div>
+            </div>
+            <!-- 其他子卡片 -->
+            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
+              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-circle-info"></i> 其他</div>
+              <div style="font-size:1em; color:#333;">狀態: <span id="pn14-status">--</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="alerts" style="overflow: hidden; height: 100vh;">
+    <div class="container" style="grid-template-columns: 1fr 1fr; gap: 32px; height:100%;">
+      <div class="device-card" id="device-alerts" style="height:100%; min-height:0; display:flex; flex-direction:column;">
+        <!-- <div class="status-indicator"></div> -->
+        <h3><i class="fa fa-exclamation-triangle"></i> 警告訊息</h3>
+        <div id="alert-messages" style="flex:1; overflow:auto; font-size:1.2em; color:#F14C4C; padding:12px 0;">
+          <!-- 警告訊息內容 -->
+        </div>
+      </div>
+      <div class="device-card" id="device-log" style="height:100%; min-height:0; display:flex; flex-direction:column;">
+        <!-- <div class="status-indicator"></div> -->
+        <h3><i class="fa fa-list"></i> 執行紀錄</h3>
+        <div id="log-messages" style="flex:1; overflow:auto; font-size:1.1em; color:#1976d2; padding:12px 0;">
+          <!-- 執行log內容 -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="settings">
+    <form id="settings-form" style="display: flex; flex-direction: column; gap: 10px; padding: 20px;">
+      <div>
+        <label for="overview-ip" style="font-weight:bold; font-size:1.2em;">Overview IP:</label>
+        <input type="text" id="overview-ip" name="overview-ip" placeholder="Enter the IP of the Overview page"
+          style="width: 300px; max-width: 100%; padding: 8px; border-radius: 4px; border: none solid #3C3C3C; background-color: #E5E9F2; color: #003366; font-size: 1.2em;">
+      </div>
+      <div id="device-settings-container"
+        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; font-size:1.2em;">
+        <!-- 設備設定區塊將在這裡動態生成 -->
+      </div>
+      <button type="button" onclick="saveSettings()" id="save-settings-btn"
+        style="padding: 0 24px; height: 38px; background-color: #007acc; color: #fff; border: none; border-radius: 3px; cursor: pointer; margin-top: 20px; font-size: 1.2em; font-weight: 600; width: fit-content; min-width: 0; transition: background 0.2s, color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.08); letter-spacing: 1px;">
+        <i class="fa fa-save" style="margin-right:8px;"></i>SAVE
+      </button>
+    </form>
+    <script>
+      // 設定設備設定區塊的label與input樣式
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('device-settings-container');
+        if (container) {
+          Array.from(container.querySelectorAll('label')).forEach(label => {
+            label.style.fontWeight = 'bold';
+            label.style.fontSize = '1.2em';
+          });
+          Array.from(container.querySelectorAll('input')).forEach(input => {
+            input.style.backgroundColor = '#E5E9F2';
+            input.style.color = '#003366';
+            input.style.fontSize = '1.2em';
+          });
+        }
+      });
+    </script>
+  </section>
+
+  <section id="logout">
+    <div class="container">
+      <button onclick="logout()">Logout</button> <!-- Changed to English -->
+    </div>
+  </section>
+
+  <section id="help">
+    <div class="container">
+      <button onclick="showHelp()">Show Help Information</button> <!-- Changed to English -->
+    </div>
+  </section>
+  
+  <div class="info-bar aisails-info-bar">
+    <div><strong>系統:</strong> <span id="system-status">Normal</span></div>
+    <div><strong>網路:</strong> 
+      <span id="network-status-indicator"></span>
+      <span id="network-status">NG</span>
+    </div>
+    <div><strong>ESS電量:</strong> <span id="battery-level">100%</span></div>
+    <div id="response-message" class="response-message"></div>
+    <div id="weather-block"></div>
+  </div>
+  <style>
+    /* ...existing code... */
+    .switch-diesel-cmd {
+      position: relative;
+      display: inline-block;
+      width: 110px;
+      height: 40px;
+      vertical-align: middle;
+      margin-top: 4px;
+    }
+    .switch-diesel-cmd input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-diesel-cmd {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #F14C4C;
+      transition: .4s;
+      border-radius: 34px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: 1px;
+      user-select: none;
+      padding: 0 18px;
+    }
+    .slider-diesel-cmd:before {
+      position: absolute;
+      content: "";
+      height: 32px;
+      width: 32px;
+      left: 4px;
+      bottom: 4px;
+      background-color: #fff;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,51,102,0.08);
+    }
+    .switch-diesel-cmd input:checked + .slider-diesel-cmd {
+      background-color: #52c41a;
+      color: #fff;
+    }
+    .switch-diesel-cmd input:checked + .slider-diesel-cmd:before {
+      transform: translateX(66px);
+    }
+    .diesel-io-label {
+      z-index: 2;
+      font-size: 1.3em;
+      font-weight: bold;
+      width: 18px;
+      text-align: center;
+      pointer-events: none;
+    }
+    .diesel-i {
+      color: #fff;
+      margin-left: 2px;
+    }
+    .diesel-o {
+      color: #fff;
+      margin-right: 2px;
+    }
+    /* ...existing code... */
+  </style>
+<script>
+// ...existing code...
+
+function toggleDieselSwitchCmd() {
+  const sw = document.getElementById('diesel-toggle-switch');
+  // 不再切換文字，I/O 由 CSS 控制
+  if (sw.checked) {
+    sendCommand('diesel', 'start_dg');
+  } else {
+    sendCommand('diesel', 'stop_dg');
+  }
+}
+// ...existing code...
+</script>
+</body>
+</html>

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>能源設備控制系統</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      padding: 20px;
+    }
+    .device-card {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      width: 320px;
+      margin-right: 20px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+    .connected {
+      background: #1890ff;
+    }
+    .disconnected {
+      background: #ff4d4f;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+    .control-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    button {
+      padding: 6px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f5f5f5;
+    }
+    button.toggle {
+      background: #52c41a;
+      color: white;
+    }
+    button.toggle.stop {
+      background: #ff4d4f;
+    }
+    button.disabled {
+      background-color: #e8e8e8;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    .soc-bar {
+      height: 8px;
+      background: #f0f0f0;
+      margin-top: 10px;
+    }
+    .soc-fill {
+      height: 100%;
+      width: 0%;
+      background: #52c41a;
+    }
+    .response-message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      display: none;
+    }
+    .response-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .response-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .monitor-info {
+      margin-top: 10px;
+      font-size: 16px; /* Increased font size */
+      color: #555;
+    }
+    .monitor-info span {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Storage System -->
+    <div class="device-card" id="device-sbms">
+      <div class="status-indicator"></div>
+      <h3>儲能櫃 (SOC: <span id="soc-value">0</span>%)</h3>
+      <div class="control-group">
+        <button onclick="sendCommand('pcs', 'acb_open')">ACB Open</button>
+        <button onclick="sendCommand('pcs', 'acb_close')">ACB Close</button>
+        <button onclick="sendCommand('pcs', 'pcs_run_microgrid')">Run Microgrid</button>
+        <button onclick="sendCommand('pcs', 'pcs_stop_microgrid')">Stop Microgrid</button>
+        <button onclick="sendCommand('pcs', 'pcs_fault_reset')">Fault Reset</button>
+        <button onclick="sendCommand('pcs', 'pcs_adjust_freq')">Adjust Freq</button>
+      </div>
+      <div class="control-group">
+        <button onclick="sendCommand('sbms', 'power_on_sbms')">Power On</button>
+        <button onclick="sendCommand('sbms', 'power_off_sbms')">Power Off</button>
+        <button onclick="sendCommand('sbms', 'open_dc_switch')">Open DC</button>
+        <button onclick="sendCommand('sbms', 'close_dc_switch')">Close DC</button>
+        <button onclick="sendCommand('sbms', 'clear_sbms_fault')">Clear Fault</button>
+      </div>
+      <div class="soc-bar">
+        <div id="soc-fill" class="soc-fill"></div>
+      </div>
+      <div class="monitor-info" id="monitor-sbms">
+        <span>電壓: <span id="sbms-voltage">-</span> V</span>
+        <span>電流: <span id="sbms-current">-</span> A</span>
+        <span>溫度: <span id="sbms-temperature">-</span> °C</span>
+      </div>
+    </div>
+
+    <!-- Other Devices -->
+    <div class="device-card" id="device-diesel">
+      <div class="status-indicator"></div>
+      <h3>柴油發電機</h3>
+      <button class="toggle" onclick="toggleDevice('diesel')">啟動</button>
+      <div class="monitor-info" id="monitor-diesel">
+        <span>功率: <span id="diesel-power">-</span> kW</span>
+        <span>燃料: <span id="diesel-fuel">-</span> %</span>
+      </div>
+    </div>
+
+    <div class="device-card" id="device-pn14">
+      <div class="status-indicator"></div>
+      <h3>風帆發電</h3>
+      <button class="toggle" onclick="toggleDevice('pn14')">啟動</button>
+      <div class="monitor-info" id="monitor-pn14">
+        <span>功率: <span id="pn14-power">-</span> kW</span>
+        <span>風速: <span id="pn14-wind-speed">-</span> m/s</span>
+      </div>
+    </div>
+
+    <div class="device-card" id="device-solar">
+      <div class="status-indicator"></div>
+      <h3>太陽能板</h3>
+      <button class="toggle" onclick="toggleDevice('solar')">啟動</button>
+      <div class="monitor-info" id="monitor-solar">
+        <span>功率: <span id="solar-power">-</span> kW</span>
+        <span>日照: <span id="solar-irradiance">-</span> W/m²</span>
+      </div>
+    </div>
+
+    <div class="device-card" id="device-fuel_cell">
+      <div class="status-indicator"></div>
+      <h3>燃料電池</h3>
+      <button class="toggle" onclick="toggleDevice('fuel_cell')">啟動</button>
+      <div class="monitor-info" id="monitor-fuel-cell">
+        <span>功率: <span id="fuel-cell-power">-</span> kW</span>
+        <span>氫氣壓力: <span id="fuel-cell-hydrogen-pressure">-</span> bar</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="response-message" class="response-message"></div>
+
+  <script>
+    const API_BASE = "/control";
+    const STATUS_API = "/status";
+
+    async function fetchDeviceStatus() {
+      try {
+        const response = await fetch(STATUS_API);
+        const data = await response.json();
+        updateDeviceStatus(data.devices);
+      } catch (error) {
+        console.error("Failed to fetch device status:", error);
+      }
+    }
+
+    function updateDeviceStatus(devices) {
+      for (const [key, device] of Object.entries(devices)) {
+        const card = document.getElementById(`device-${key}`);
+        const indicator = card.querySelector(".status-indicator");
+        const buttons = card.querySelectorAll("button");
+        const name = card.querySelector("h3");
+
+        if (device.connected) {
+          indicator.className = "status-indicator connected";
+          name.style.color = "#1890ff";
+          buttons.forEach(button => {
+            button.disabled = false;
+            button.classList.remove("disabled");
+          });
+        } else {
+          indicator.className = "status-indicator disconnected";
+          name.style.color = "#ff4d4f";
+          buttons.forEach(button => {
+            button.disabled = true;
+            button.classList.add("disabled");
+          });
+        }
+
+        if (key === "sbms") {
+          document.getElementById("soc-value").textContent = device.soc || 0;
+          document.getElementById("soc-fill").style.width = `${device.soc || 0}%`;
+          document.getElementById("sbms-voltage").textContent = device.voltage || "-";
+          document.getElementById("sbms-current").textContent = device.current || "-";
+          document.getElementById("sbms-temperature").textContent = device.temperature || "-";
+        } else if (key === "diesel") {
+          document.getElementById("diesel-power").textContent = device.power || "-";
+          document.getElementById("diesel-fuel").textContent = device.fuel || "-";
+        } else if (key === "pn14") {
+          document.getElementById("pn14-power").textContent = device.power || "-";
+          document.getElementById("pn14-wind-speed").textContent = device.wind_speed || "-";
+        } else if (key === "solar") {
+          document.getElementById("solar-power").textContent = device.power || "-";
+          document.getElementById("solar-irradiance").textContent = device.irradiance || "-";
+        } else if (key === "fuel_cell") {
+          document.getElementById("fuel-cell-power").textContent = device.power || "-";
+          document.getElementById("fuel-cell-hydrogen-pressure").textContent = device.hydrogen_pressure || "-";
+        }
+      }
+    }
+
+    async function sendCommand(device, action) {
+      const responseMessage = document.getElementById("response-message");
+      try {
+        const response = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ device, action })
+        });
+        const result = await response.json();
+        if (response.ok) {
+          responseMessage.textContent = result.message || "操作成功";
+          responseMessage.className = "response-message response-success";
+        } else {
+          responseMessage.textContent = result.error || "操作失敗";
+          responseMessage.className = "response-message response-error";
+        }
+      } catch (error) {
+        responseMessage.textContent = "無法連接到後端服務";
+        responseMessage.className = "response-message response-error";
+        console.error("Error sending command:", error);
+      }
+      responseMessage.style.display = "block";
+      setTimeout(() => {
+        responseMessage.style.display = "none";
+      }, 5000);
+    }
+
+    function toggleDevice(device) {
+      const card = document.getElementById(`device-${device}`);
+      const button = card.querySelector(".toggle");
+      let action;
+
+      if (device === "diesel") {
+        action = button.classList.contains("stop") ? "dgstop" : "dgstart";
+      } else {
+        action = button.classList.contains("stop") ? "stop" : "start";
+      }
+
+      sendCommand(device, action).then(() => {
+        button.textContent = action === "dgstart" || action === "start" ? "停止" : "啟動";
+        button.classList.toggle("stop");
+      });
+    }
+
+    setInterval(fetchDeviceStatus, 5000);
+    fetchDeviceStatus();
+  </script>
+</body>
+</html>
