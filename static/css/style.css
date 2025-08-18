@@ -1,0 +1,396 @@
+:root {
+    --primary: #2563eb; /* 藍色主色 */
+    --primary-light: #f1f5f9; /* 卡片/背景淡藍 */
+    --success: #22c55e; /* 綠色 */
+    --danger: #ef4444; /* 紅色 */
+    --warning: #f59e42; /* 橘色 */
+    --background: #f8fafc; /* 整體背景 */
+    --card-bg: #fff;
+    --card-border: #e5e7eb;
+    --text-main: #1e293b; /* 深灰藍 */
+    --text-secondary: #2563eb;
+    --shadow: 0 2px 8px rgba(30,41,59,0.08);
+    --font-main: 'Inter', 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+    --radius: 14px;
+  }
+  html, body {
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+    background: var(--background) url('../area.jpg') no-repeat center center fixed;
+    background-size: 100vw 100vh;
+    background-position: center center;
+    background-repeat: no-repeat;
+    color: var(--text-main);
+    overflow: hidden;
+    font-size: 18px;
+  }
+  #main-content {
+    min-height: calc(100vh - 56px - 38px);
+    max-height: calc(100vh - 56px - 38px);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  nav {
+    background: var(--primary-light);
+    color: var(--primary);
+    border-bottom: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+    font-size: 18px;
+    font-weight: 500;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-title {
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 1.5em;
+    margin-right: 32px;
+  }
+  .nav-menu {
+    display: flex;
+    gap: 8px;
+  }
+  .nav-button {
+    background: none;
+    color: var(--primary);
+    font-family: var(--font-main);
+    font-size: 1em;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+  .nav-button.active, .nav-button:hover {
+    background: var(--primary);
+    color: #fff;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 24px;
+    padding: 32px;
+  }
+  .device-card {
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    transition: box-shadow 0.2s, border 0.2s;
+  }
+  .device-card:hover {
+    box-shadow: 0 6px 24px rgba(37,99,235,0.10);
+    border: 1.5px solid var(--primary);
+  }
+  .device-card h3 {
+    color: var(--primary);
+    font-size: 1.7em;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .control-group {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-family: var(--font-main);
+    font-weight: 500;
+    border: none;
+    padding: 8px 22px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(37,99,235,0.06);
+  }
+  button:hover:not(:disabled) {
+    background: #1742a0;
+    color: #fff;
+  }
+  button:disabled {
+    background: #e5e7eb;
+    color: #b0b6be;
+  }
+  .ess-power-on {
+    background: var(--success);
+  }
+  .ess-power-off {
+    background: var(--danger);
+  }
+  .ess-power-on:hover {
+    background: #15803d;
+  }
+  .ess-power-off:hover {
+    background: #b91c1c;
+  }
+  .device-data {
+    font-size: 1.5em;
+    margin-top: 8px;
+    color: var(--text-main);
+    font-weight: bold;
+  }
+  .device-data div {
+    margin-bottom: 8px;
+  }
+  .device-data i {
+    color: var(--primary);
+    margin-right: 8px;
+  }
+  .info-bar {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 1em;
+    border-top: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+    font-family: var(--font-main);
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    z-index: 100;
+    padding: 0 24px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  #network-status-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 1px solid #fff;
+    margin-right: 6px;
+  }
+  #weather-block {
+    color: var(--primary);
+    font-size: 1em;
+    font-weight: 500;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .response-message {
+    font-size: 1.5em;
+    color: #0067b1; /* 緯創藍 */
+    font-weight: bold;
+    margin-left: 24px;
+    display: inline-block;
+  }
+  @media (max-width: 900px) {
+    html, body { font-size: 18px; }
+    .container {
+      grid-template-columns: 1fr;
+      padding: 12px;
+      gap: 12px;
+    }
+    nav {
+      font-size: 1em;
+      padding: 0 8px;
+      height: 48px;
+    }
+    .nav-title {
+      font-size: 1.2em;
+      margin-right: 10px;
+    }
+    .device-card {
+      padding: 12px 8px 8px 12px;
+      border-radius: 10px;
+    }
+    .device-card h3 {
+      font-size: 1.5em;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .control-group {
+      gap: 8px;
+      margin-top: 8px;
+    }
+  }
+
+  #settings-form label {
+    font-size: 1.3em;
+    color: #0d47a1;
+    font-weight: bold;
+    margin-bottom: 6px;
+    display: block;
+  }
+  #settings-form input[type="text"],
+  #settings-form input[type="number"] {
+    font-size: 1.2em;
+    color: #222B45;
+    background: #e3f2fd;
+    border: 1.5px solid #1976d2;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+  }
+  #settings-form input[type="text"]:focus,
+  #settings-form input[type="number"]:focus {
+    outline: 2px solid #1976d2;
+    background: #fff;
+  }
+  #settings-form h4 {
+    font-size: 1.15em;
+    color: #1976d2;
+    margin-bottom: 8px;
+    margin-top: 12px;
+  }
+  #save-settings-btn {
+    font-size: 1.3em;
+    padding: 10px 32px;
+    border-radius: 8px;
+    font-weight: bold;
+    background: #1976d2;
+    color: #fff;
+    margin-top: 24px;
+  }
+  #save-settings-btn:hover {
+    background: #1251a3;
+  }
+  #device-settings-container {
+    gap: 28px;
+  }
+  @media (max-width: 900px) {
+    #settings-form label { font-size: 1.1em; }
+    #settings-form input { font-size: 1em; }
+    #save-settings-btn { font-size: 1.1em; }
+  }
+
+  #alerts {
+    height: calc(100vh - 56px - 38px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    padding-top: 0px;
+    padding-bottom: 0px; /* 距離底部300px */
+  }
+  #alerts .container {
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  #device-alerts,
+  #device-log {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* 讓卡片不超出頁面 */
+    max-height: 100%;
+    box-sizing: border-box;
+  }
+  #alert-messages,
+  #log-messages {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    /* 讓內容可捲動 */
+  }
+
+  #overview, #device-control, #alerts, #settings {
+  min-height: calc(100vh - 56px - 150px);
+  box-sizing: border-box;
+  padding-bottom: 50px; /* 預留訊息列高度，避免卡片被裁切 */
+}
+.info-bar {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  z-index: 100;
+}
+
+
+/* ...existing code... */
+    .switch-diesel-cmd {
+      position: relative;
+      display: inline-block;
+      width: 110px;
+      height: 40px;
+      vertical-align: middle;
+      margin-top: 4px;
+    }
+    .switch-diesel-cmd input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-diesel-cmd {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #F14C4C;
+      transition: .4s;
+      border-radius: 34px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: 1px;
+      user-select: none;
+      padding: 0 18px;
+    }
+    .slider-diesel-cmd:before {
+      position: absolute;
+      content: "";
+      height: 32px;
+      width: 32px;
+      left: 4px;
+      bottom: 4px;
+      background-color: #fff;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,51,102,0.08);
+    }
+    .switch-diesel-cmd input:checked + .slider-diesel-cmd {
+      background-color: #52c41a;
+      color: #fff;
+    }
+    .switch-diesel-cmd input:checked + .slider-diesel-cmd:before {
+      transform: translateX(66px);
+    }
+    .diesel-io-label {
+      z-index: 2;
+      font-size: 1.3em;
+      font-weight: bold;
+      width: 18px;
+      text-align: center;
+      pointer-events: none;
+    }
+    .diesel-i {
+      color: #fff;
+      margin-left: 2px;
+    }
+    .diesel-o {
+      color: #fff;
+      margin-right: 2px;
+    }
+    /* ...existing code... */

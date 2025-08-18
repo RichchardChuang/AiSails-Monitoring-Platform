@@ -2,7 +2,7 @@
 # -*- coding: utf_8 -*-
 from __future__ import print_function
 
-import modbus_tk
+
 from modbus_tk import modbus_tcp, hooks
 import logging, time
 

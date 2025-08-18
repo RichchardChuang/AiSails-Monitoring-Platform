@@ -1,40 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>彰濱案場控制系統</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="/static/css/style.css" rel="stylesheet">
-  <script src="/static/script/main.js"></script>
-  <script src="https://alcdn.msauth.net/browser/2.28.3/js/msal-browser.min.js"></script>
-</head>
-<body>
-  <nav>
-    <div class="nav-title">
-      <i class="fa fa-wing" style="margin-right:10px;color:#61dafb;"></i>aiSails
-    </div>
-    <div class="nav-menu">
-      <button class="nav-button" onclick="navigateTo('overview')">
-        <i class="fa fa-desktop"></i> Overview
-      </button>
-      <button class="nav-button" onclick="navigateTo('device-control')">
-        <i class="fa fa-sliders"></i> Control
-      </button>
-      <button class="nav-button" onclick="navigateTo('alerts')">
-        <i class="fa fa-bell"></i> Alerts
-      </button>
-      <button class="nav-button" onclick="navigateTo('settings')">
-        <i class="fa fa-cog"></i> Settings
-      </button>
-    </div>
-    <span style="flex:1;"></span>
-      <span style="margin-right:24px;"><i class="fa fa-exclamation-triangle" style="color:#ffc107;"></i> <span id="alert-count">0</span></span>
-      <span style="margin-right:24px;"><i class="fa fa-user"></i> <span id="current-user">Logout</span></span>
-        <button class="nav-button nav-help-btn" onclick="navigateTo('help')" aria-label="Help">
-      <i class="fa fa-question-circle"></i>
-    </button>
-  </nav>
+// document.addEventListener('DOMContentLoaded', function () {
+//             console.log('DOM 已加载完成');
+//             // 这里可以写你想要执行的代码
+//             alert('DOM Ready!'); // 弹出 "Ready" 的提醒
+//         });
 
-  <!-- <script>
 // 全域設備清單
 const devices = ["sbms", "diesel", "pcs", "pn14"];
 let msalInstance;
@@ -594,213 +563,13 @@ async function fetchLogs() {
 }
 setInterval(fetchLogs, 3000);
 document.addEventListener('DOMContentLoaded', fetchLogs);
-  </script> -->
-
-  <section id="overview">
-    <iframe id="overview-iframe" src="http://192.168.127.246/#/" style="width:100%; height:100%; min-height:400px; border:none; display:block;"></iframe> 
-  </section>
 
 
-  <section id="device-control" style="overflow-y: auto; height: calc(100vh - 38px); padding-bottom: 48px;">
-    <div class="container" style="padding-bottom: 0;">
-      <div class="device-card" id="device-sbms" style="display: flex; flex-direction: row; min-height: 0; justify-content: flex-start;">
-        <div style="flex:1; display: flex; flex-direction: column; position:relative;">
-          <div style="display:flex; align-items:flex-start;">
-            <h3><i class="fa fa-battery-full"></i> ESS </h3>
-          </div>
-          <div class="control-group">
-            <button class="ess-power-on" onclick="sendCommand('sbms', 'power_on_sbms')">On</button>
-            <button class="ess-power-off" onclick="sendCommand('sbms', 'power_off_sbms')">Off</button>
-          </div>
-          <div style="margin:8px 0 0 0;" class="device-data">
-            <div><i class="fa fa-bolt"></i> <span id="sbms-voltage">--</span> V</div>
-            <div><i class="fa fa-charging-station"></i> <span id="sbms-current">--</span> A</div>
-            <div><i class="fa fa-temperature-half"></i> <span id="sbms-temp">--</span> °C</div>
-            <div><i class="fa fa-circle-info"></i> <span id="sbms-status">--</span></div>
-          </div>
-          <!-- 新增下方子卡片區塊 -->
-          <div style="display:flex; flex-direction:row; gap:5px; margin-top:5px; width:100%; align-items: flex-start;">
-            <!-- UPS 子卡片 -->
-            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-plug"></i> UPS</div>
-              <div style="font-size:1em; color:#333;">狀態: <span id="ups-status">--</span></div>
-              <div style="font-size:1em; color:#333;">電壓: <span id="ups-voltage">--</span> V</div>
-              <div style="font-size:1em; color:#333;">負載: <span id="ups-load">--</span> %</div>
-            </div>
-            <!-- 空調 子卡片 -->
-            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-snowflake"></i> 空調</div>
-              <div style="font-size:1em; color:#333;">狀態: <span id="ac-status">--</span></div>
-              <div style="font-size:1em; color:#333;">溫度: <span id="ac-temp">--</span> °C</div>
-              <div style="font-size:1em; color:#333;">模式: <span id="ac-mode">--</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="device-info-panel" style="flex:1; padding-left:24px; display:flex; flex-direction:column; justify-content:center; min-width:0; min-height:0; box-sizing:border-box;">
-          <!-- PCS 子卡片 -->
-          <div class="device-card" style="margin-top:0; background:#f7faff; box-shadow:0 1px 4px rgba(0,51,102,0.06); border:1px solid #e0eaf2; border-radius:10px; padding:20px; width:100%; max-width:unset; min-width:0; min-height:0; box-sizing:border-box; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-start;">
-            <div style="font-size:1.3em; font-weight:bold; color:#007ACC; margin-bottom:8px;">
-              PCS 頻率控制(Hz)
-            </div>
-            <div id="pcs-frequency" style="font-size:4.4em; font-weight:bold; color:#007ACC; min-width:auto; margin-bottom:10px;">--</div>
-            <div style="display:flex; flex-direction:row; gap:18px; justify-content:center; margin-bottom:10px;">
-              <button id="pcs-freq-down" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#F14C4C;"
-                onclick="sendCommand('pcs', 'pcs_freq_down')">
-                <i class="fa fa-minus"></i>
-              </button>
-              <button id="pcs-freq-reset" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#222;"
-                onclick="sendCommand('pcs', 'pcs_freq_reset')">
-                <i class="fa fa-rotate-right"></i>
-              </button>
-              <button id="pcs-freq-up" style="width:40px; height:40px; border-radius:50%; font-size:1.5em; display:flex; align-items:center; justify-content:center; color:#52c41a;"
-                onclick="sendCommand('pcs', 'pcs_freq_up')">
-                <i class="fa fa-plus"></i>
-              </button>
-            </div>
-            <div id="pcs-freq-progress-bar-container" style="width:180px;height:18px;background:#e0e0e0;border-radius:9px;overflow:hidden;display:none;margin:8px 0;">
-              <div id="pcs-freq-progress-bar" style="height:100%;width:0%;background:#1976d2;transition:width 0.2s;"></div>
-            </div>
-            <div style="margin-top:10px; font-size:1.1em; color:#222; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div><i class="fa fa-bolt"></i> 電壓: <span id="pcs-voltage">--</span> V</div>
-              <div><i class="fa fa-charging-station"></i> 電流: <span id="pcs-current">--</span> A</div>
-              <div><i class="fa fa-circle-info"></i> 狀態: <span id="pcs-status">--</span></div>
-              <div><i class="fa fa-battery-half"></i> 有效功率: <span id="pcs-activepower">--</span> kW</div>
-              <div><i class="fa fa-battery-full"></i> 無效功率: <span id="pcs-reactivepower">--</span> kVar</div>
-              <div><i class="fa fa-percent"></i> 負載: <span id="pcs-load">--</span> %</div>
-              <div><i class="fa fa-thermometer-half"></i> 溫度: <span id="pcs-temp">--</span> °C</div>
-              <div><i class="fa fa-link"></i> 連線狀態: <span id="pcs-connected">--</span></div>
-              <div><i class="fa fa-cogs"></i> 運行模式: <span id="pcs-operationmode">--</span></div>
-              <div><i class="fa fa-cogs"></i> PCS 狀態: <span id="pcs-pcsstatus">--</span></div>
-              <div><i class="fa fa-cogs"></i> Grid 狀態: <span id="pcs-gridstatus">--</span></div>
-              <div><i class="fa fa-bolt"></i> 供應頻率: <span id="pcs-supplyfrequency">--</span> Hz</div>
-              <div><i class="fa fa-bolt"></i> DC 電壓: <span id="pcs-dcvoltage">--</span> V</div>
-              <div><i class="fa fa-exclamation-triangle"></i> 故障: <span id="pcs-fault">--</span></div>
-              <div><i class="fa fa-bolt"></i> 線電壓: <span id="pcs-linevoltage">--</span> V</div>
-              <div><i class="fa fa-bolt"></i> 線頻率: <span id="pcs-linefrequency">--</span> Hz</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="device-card" id="device-diesel" style="display: flex; flex-direction: column;">
-        <div style="flex:1; display: flex; flex-direction: column;">
-          <h3><i class="fa fa-industry"></i> Diesel Generator </h3>
-          <div class="control-group">
-            <!-- 滑動開關，按鈕內顯示命令名稱 -->
-            <label class="switch-diesel-cmd">
-              <input type="checkbox" id="diesel-toggle-switch" onchange="toggleDieselSwitchCmd()">
-              <span class="slider-diesel-cmd">
-                <span class="diesel-io-label diesel-i">I</span>
-                <span class="diesel-io-label diesel-o">O</span>
-              </span>
-            </label>
-          </div>
-        </div>
-        <!-- 新增一張子卡片，平均分配所有訊息 -->
-        <div style="display: flex; flex-direction: row; gap: 5px; width: 100%; margin-top: 5px;">
-          <!-- 子卡片1 -->
-          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-circle-info"></i> 狀態</div>
-            <div style="font-size:1em; color:#333;">狀態: <span id="diesel-status">--</span></div>
-            <div style="font-size:1em; color:#333;">頻率: <span id="diesel-frequency">--</span> Hz</div>
-            <div style="font-size:1em; color:#333;">油壓: <span id="diesel-oilpressure">--</span></div>
-            <div style="font-size:1em; color:#333;">冷卻溫度: <span id="diesel-coolertemperature">--</span> °C</div>
-            <div style="font-size:1em; color:#333;">燃料: <span id="diesel-fuel">--</span></div>
-          </div>
-          <!-- 子卡片2 -->
-          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-bolt"></i> 電力</div>
-            <div style="font-size:1em; color:#333;">L1功率: <span id="diesel-l1power">--</span> kW</div>
-            <div style="font-size:1em; color:#333;">L2功率: <span id="diesel-l2power">--</span> kW</div>
-            <div style="font-size:1em; color:#333;">L3功率: <span id="diesel-l3power">--</span> kW</div>
-            <div style="font-size:1em; color:#333;">L1電壓: <span id="diesel-l1voltage">--</span> V</div>
-            <div style="font-size:1em; color:#333;">L2電壓: <span id="diesel-l2voltage">--</span> V</div>
-            <div style="font-size:1em; color:#333;">L3電壓: <span id="diesel-l3voltage">--</span> V</div>
-            <div style="font-size:1em; color:#333;">L1電流: <span id="diesel-l1current">--</span> A</div>
-            <div style="font-size:1em; color:#333;">L2電流: <span id="diesel-l2current">--</span> A</div>
-            <div style="font-size:1em; color:#333;">L3電流: <span id="diesel-l3current">--</span> A</div>
-          </div>
-          <!-- 子卡片3 -->
-          <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:#f8fafc; border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:14px 10px 10px 14px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-            <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px;"><i class="fa fa-battery-full"></i> 其他</div>
-            <div style="font-size:1em; color:#333;">電池電壓: <span id="diesel-batteryvoltage">--</span> V</div>
-            <div style="font-size:1em; color:#333;">磁場電壓: <span id="diesel-chargemagneticvoltage">--</span> V</div>
-            <div style="font-size:1em; color:#333;">溫度: <span id="diesel-temp">--</span></div>
-            <div style="font-size:1em; color:#333;">功率: <span id="diesel-power">--</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="device-card" id="device-pn14" style="display: flex; flex-direction: column; min-height: 0; justify-content: flex-start; position:relative; overflow:hidden;">
-        <video autoplay loop muted playsinline style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; object-position:center; z-index:0;">
-          <source src="../static/fly.mp4" type="video/mp4">
-        </video>
-        <div style="position:relative; z-index:1; width:100%; height:100%;">
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <h3><i class="fa fa-fan"></i> SkySails PN14</h3>
-            <span class="status-indicator">
-              <i class="fa fa-link" id="pn14-status-icon" style="color:#0091FF;display:none;"></i>
-              <i class="fa fa-unlink" id="pn14-disconnect-icon" style="color:#F14C4C;display:none;"></i>
-            </span>
-          </div>
-          <!-- 子卡片區塊 -->
-          <div style="display:flex; flex-direction:row; gap:5px; margin-top:5px; width:100%; align-items: flex-start;">
-            <!-- 風速子卡片 -->
-            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-wind"></i> 風速</div>
-              <div style="font-size:1em; color:#333;">風速: <span id="pn14-wind">--</span> m/s</div>
-            </div>
-            <!-- 拉力子卡片 -->
-            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-arrow-up"></i> 拉力</div>
-              <div style="font-size:1em; color:#333;">拉力: <span id="pn14-force">--</span> N</div>
-            </div>
-            <!-- 其他子卡片 -->
-            <div class="device-card" style="flex:1; min-width:0; min-height:auto; max-height:auto; background:rgba(248,250,252,0.85); border:1px solid #e0eaf2; border-radius:10px; box-shadow:0 1px 4px rgba(0,51,102,0.06); padding:10px 10px 8px 10px; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start;">
-              <div style="font-size:1.1em; font-weight:bold; color:#1976d2; margin-bottom:4px; margin-top:0; align-self:flex-start;"><i class="fa fa-circle-info"></i> 其他</div>
-              <div style="font-size:1em; color:#333;">狀態: <span id="pn14-status">--</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <section id="alerts" style="overflow: hidden; height: 100vh;">
-    <div class="container" style="grid-template-columns: 1fr 1fr; gap: 32px; height:100%;">
-      <div class="device-card" id="device-alerts" style="height:100%; min-height:0; display:flex; flex-direction:column;">
-        <!-- <div class="status-indicator"></div> -->
-        <h3><i class="fa fa-exclamation-triangle"></i> 警告訊息</h3>
-        <div id="alert-messages" style="flex:1; overflow:auto; font-size:1.2em; color:#F14C4C; padding:12px 0;">
-          <!-- 警告訊息內容 -->
-        </div>
-      </div>
-      <div class="device-card" id="device-log" style="height:100%; min-height:0; display:flex; flex-direction:column;">
-        <!-- <div class="status-indicator"></div> -->
-        <h3><i class="fa fa-list"></i> 執行紀錄</h3>
-        <div id="log-messages" style="flex:1; overflow:auto; font-size:1.1em; color:#1976d2; padding:12px 0;">
-          <!-- 執行log內容 -->
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <section id="settings">
-    <form id="settings-form" style="display: flex; flex-direction: column; gap: 10px; padding: 20px;">
-      <div>
-        <label for="overview-ip" style="font-weight:bold; font-size:1.2em;">Overview IP:</label>
-        <input type="text" id="overview-ip" name="overview-ip" placeholder="Enter the IP of the Overview page"
-          style="width: 300px; max-width: 100%; padding: 8px; border-radius: 4px; border: none solid #3C3C3C; background-color: #E5E9F2; color: #003366; font-size: 1.2em;">
-      </div>
-      <div id="device-settings-container"
-        style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; font-size:1.2em;">
-        <!-- 設備設定區塊將在這裡動態生成 -->
-      </div>
-      <button type="button" onclick="saveSettings()" id="save-settings-btn"
-        style="padding: 0 24px; height: 38px; background-color: #007acc; color: #fff; border: none; border-radius: 3px; cursor: pointer; margin-top: 20px; font-size: 1.2em; font-weight: 600; width: fit-content; min-width: 0; transition: background 0.2s, color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.08); letter-spacing: 1px;">
-        <i class="fa fa-save" style="margin-right:8px;"></i>SAVE
-      </button>
-    </form>
-    <!-- <script>
-      // 設定設備設定區塊的label與input樣式
+
+
+//  ************設定設備設定區塊的label與input樣式*****************
       document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('device-settings-container');
         if (container) {
@@ -815,34 +584,8 @@ document.addEventListener('DOMContentLoaded', fetchLogs);
           });
         }
       });
-    </script> -->
-  </section>
 
-  <section id="logout">
-    <div class="container">
-      <button onclick="logout()">Logout</button> <!-- Changed to English -->
-    </div>
-  </section>
-
-  <section id="help">
-    <div class="container">
-      <button onclick="showHelp()">Show Help Information</button> <!-- Changed to English -->
-    </div>
-  </section>
-  
-  <div class="info-bar aisails-info-bar">
-    <div><strong>系統:</strong> <span id="system-status">Normal</span></div>
-    <div><strong>網路:</strong> 
-      <span id="network-status-indicator"></span>
-      <span id="network-status">NG</span>
-    </div>
-    <div><strong>ESS電量:</strong> <span id="battery-level">100%</span></div>
-    <div id="response-message" class="response-message"></div>
-    <div id="weather-block"></div>
-  </div>
-
-<!-- <script>
-// ...existing code...
+//  ************existing code*****************
 
 function toggleDieselSwitchCmd() {
   const sw = document.getElementById('diesel-toggle-switch');
@@ -853,7 +596,3 @@ function toggleDieselSwitchCmd() {
     sendCommand('diesel', 'stop_dg');
   }
 }
-// ...existing code...
-</script> -->
-</body>
-</html>

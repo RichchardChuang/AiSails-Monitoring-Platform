@@ -5,7 +5,15 @@ import configparser
 from threading import Lock, Thread
 import logging,time
 from modbus_tk.utils import create_logger   
+
+from flask_cors import CORS
+import psutil
+import time
+import json
+from datetime import datetime
+
 app = Flask(__name__)
+CORS(app)  # 允許跨域請求
 
 # 讀取配置文件
 config = configparser.ConfigParser()
@@ -109,7 +117,11 @@ def check_connections():
                         devices[name]["gridstatus"] = summary_data[1]
                         devices[name]["current"] = summary_data[2] / 10
                         devices[name]["active"] = True if devices[name]["current"] > 0 else False
-                        devices[name]["operationmode"] = summary_data[3]
+                        
+                        # operationmode
+                        mode_map = {0: 'AFE', 1: 'Island', 2: 'Micro Grid'}
+                        devices[name]["operationmode"] = mode_map.get(summary_data[3], str(summary_data[3]))
+                        
                         devices[name]["power"] = summary_data[4] / 100
                         devices[name]["frequency"] = summary_data[5] / 100
                         devices[name]["supplyfrequency"] = summary_data[6] / 100
@@ -118,6 +130,7 @@ def check_connections():
                         devices[name]["fault"] = summary_data[9]
                         devices[name]["linevoltage"] = summary_data[10] / 10
                         devices[name]["linefrequency"] = summary_data[11] / 10
+                    
                     elif name == "sbms": # Read SBMS Data
                         sbms_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 500, 10)
                         devices[name]["power"] = sbms_data[0] / 10
@@ -129,28 +142,37 @@ def check_connections():
                         devices[name]["capacity"] = sbms_data[6] / 10 if len(sbms_data) > 6 else 0
                         devices[name]["active"] = sbms_data[7] == 1 if len(sbms_data) > 7 else False
                         devices[name]["status"] = "Active" if devices[name]["active"] else "Inactive"
+                    
                     elif name == "diesel": # Read Diesel Generator Data 100
                         dg_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 100, 16)  # 確保讀取16個寄存器
-                        devices[name]["l3l1voltage"] = dg_data[0]                            
-                        devices[name]["l2l3voltage"] = dg_data[1]                            
-                        devices[name]["l1l2voltage"] = dg_data[2]                            
-                        devices[name]["l3current"] = dg_data[3]                            
+                        devices[name]["l1l2voltage"] = dg_data[0]  
+                        devices[name]["l2l3voltage"] = dg_data[1]
+                        devices[name]["l3l1voltage"] = dg_data[2]                                                      
+                        devices[name]["l1current"] = dg_data[3]                            
                         devices[name]["l2current"] = dg_data[4]                            
-                        devices[name]["l1current"] = dg_data[5]                            
+                        devices[name]["l3current"] = dg_data[5]                            
                         devices[name]["frequency"] = dg_data[6] / 100                            
-                        devices[name]["l3power"] = dg_data[7]                            
+                        devices[name]["l1power"] = dg_data[7]                            
                         devices[name]["l2power"] = dg_data[8]                            
-                        devices[name]["l1power"] = dg_data[9]                            
+                        devices[name]["l3power"] = dg_data[9]                            
                         devices[name]["oilpressure"] = dg_data[10]                            
                         devices[name]["coolertemperature"] = dg_data[11]                            
                         devices[name]["batteryvoltage"] = dg_data[12] / 10                           
-                        devices[name]["chargemagneticvoltage"] = dg_data[13]  / 10                           
-                        devices[name]["status"] = dg_data[14] # 0: 停止, 1: 啟動, 2: 運行, 3: 故障
+                        devices[name]["chargemagneticvoltage"] = dg_data[13]  / 10           
+                        
+                        # 狀態判斷簡化與合併
+                        status_bits = dg_data[14]
+                        status = "Manual" if status_bits & 0x08 else "Auto"
+                        status += " Started" if status_bits & 0x01 else " Stopped"
+                        status += " ACB ON" if status_bits & 0x20 else " ACB OFF"
+                        devices[name]["status"] = status
+                        
                         devices[name]["fuel"] = dg_data[15] if len(dg_data) > 15 else 0  # 燃料數據
                         # 計算總功率
                         devices[name]["power"] = devices[name]["l1power"] + devices[name]["l2power"] + devices[name]["l3power"]
                         # 使用coolertemperature作為溫度
                         devices[name]["temperature"] = devices[name]["coolertemperature"]
+                    
                     elif name == "pn14": # Read PN14 Data
                         try:
                             pn14_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 200, 5)
@@ -159,16 +181,16 @@ def check_connections():
                             devices[name]["status"] = "Active" if pn14_data[2] == 1 and len(pn14_data) > 2 else "Inactive"
                         except Exception as e:
                             logger.error(f"Error reading PN14 data: {e}")
+            
             except Exception as e:
                 dev["connected"] = False
                 masters.pop(name, None)
                 logger.error(f"設備 {name} ({dev['ip']}:{dev['port']}) 連接失敗或超時: {e}")
-        
-        time.sleep(1) #數值更新頻率幾秒鐘
+        time.sleep(1)        
 
 @app.route('/')
 def index():
-    """渲染前端頁面"""
+    """前端頁面"""
     return render_template('index.html')
 
 @app.route('/status')
@@ -202,6 +224,7 @@ def get_status():
                     "fuel": dev.get("fuel", "--"),
                     "temperature": dev.get("coolertemperature"),  # 使用coolertemperature作為溫度
                 } if name == "diesel" else {}),
+           
                 # PCS卡片訊息完整提供給前端
                 **({
                     "pcsstatus": dev.get("pcsstatus"),
@@ -216,6 +239,7 @@ def get_status():
                     "linevoltage": dev.get("linevoltage"),
                     "linefrequency": dev.get("linefrequency"),
                 } if name == "pcs" else {}),
+           
                 # SBMS卡片訊息完整提供給前端
                 **({
                     "power": dev.get("power"),
@@ -228,6 +252,7 @@ def get_status():
                     "dcvoltage": dev.get("dcvoltage"),
                     "current": dev.get("current"),
                 } if name == "sbms" else {}),
+           
                 # PN14卡片訊息完整提供給前端
                 **({
                     "wind": dev.get("wind", "--"),
@@ -433,7 +458,7 @@ def get_aad_config():
     }
     return jsonify(aad_config)
 
-# --- 新增：log buffer 與API ---
+# --- log buffer 與API ---
 from collections import deque
 import threading
 import os
@@ -449,7 +474,6 @@ def add_log(msg):
         log_buffer.appendleft(line)
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(line + "\n")
-
 # 啟動時載入舊log
 if os.path.exists(LOG_FILE):
     with open(LOG_FILE, "r", encoding="utf-8") as f:
@@ -463,4 +487,4 @@ def get_logs():
 
 if __name__ == "__main__":
     Thread(target=check_connections, daemon=True).start()
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000,debug=True)
