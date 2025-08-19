@@ -253,7 +253,7 @@ const App = () => {
           }
         }));
       });
-    }, 50000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, []);
@@ -275,7 +275,7 @@ const App = () => {
       <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
         <div className="flex items-center space-x-2">
           <AlertTriangle className="w-4 h-4" />
-          <span className="text-sm font-medium">API Error: {error}</span>
+          <span className="text-sm font-medium">Internet Error: {error}</span>
         </div>
       </div>
     );

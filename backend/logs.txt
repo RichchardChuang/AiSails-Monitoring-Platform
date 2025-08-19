@@ -56,3 +56,16 @@
 [2025-08-15 19:39:16] Action stop_dg executed in 0.02 seconds
 [2025-08-15 19:39:45] Action power_on_sbms executed in 20.04 seconds
 [2025-08-18 10:44:35] Action power_on_sbms executed in 20.01 seconds
+[2025-08-18 14:00:08] Action start_dg executed in 0.02 seconds
+[2025-08-18 14:00:10] Action stop_dg executed in 0.01 seconds
+[2025-08-18 14:00:39] Action start_dg executed in 0.01 seconds
+[2025-08-18 14:00:44] Action start_dg executed in 0.03 seconds
+[2025-08-18 14:00:45] Action stop_dg executed in 0.02 seconds
+[2025-08-18 14:13:52] Action power_on_sbms executed in 20.05 seconds
+[2025-08-18 14:13:59] Action power_off_sbms executed in 0.02 seconds
+[2025-08-18 14:14:39] Action power_on_sbms executed in 20.02 seconds
+[2025-08-18 14:24:38] Action power_on_sbms executed in 20.05 seconds
+[2025-08-18 14:51:00] Action stop_dg executed in 0.03 seconds
+[2025-08-18 14:51:04] Action start_dg executed in 0.02 seconds
+[2025-08-19 09:04:05] Action start_dg executed in 0.72 seconds
+[2025-08-19 10:51:55] Action stop_dg executed in 0.08 seconds

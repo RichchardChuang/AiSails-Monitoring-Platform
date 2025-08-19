@@ -170,7 +170,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
         />
       </div>
 
-      {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold mb-6">發電機狀態監控</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
@@ -245,7 +245,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
             </div>
           </div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 

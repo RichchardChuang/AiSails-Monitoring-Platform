@@ -90,6 +90,7 @@ const Dashboard = ({ realTimeData }) => {
         type: 'success', 
         message: 'SkySails PN14 operational', 
         amount: `${(realTimeData.skysails?.windSpeed || 0).toFixed(1)} m/s`, 
+        // amount: "1m/s", 
         time: 'Now', 
         company: 'Wind System' 
       },

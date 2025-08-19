@@ -540,7 +540,7 @@ const Reports = ({ realTimeData, apiRequest }) => {
       </div> */}
 
       {/* 操作日誌列表 */}
-      {/* <div className="bg-white/70 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white/70 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold">Operation Logs</h3>
           <p className="text-sm text-gray-500">Total: {filteredLogs.length} records</p>
@@ -603,7 +603,7 @@ const Reports = ({ realTimeData, apiRequest }) => {
             <p className="text-gray-500">No logs found matching your criteria</p>
           </div>
         )}
-      </div> */}
+      </div>
     </div>
   );
 };
