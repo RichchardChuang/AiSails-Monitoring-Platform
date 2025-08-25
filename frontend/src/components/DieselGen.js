@@ -87,7 +87,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
     }
   };
 
-  const MetricCard = ({ title, value, unit, status, icon: Icon, className = "", isSwitch = false, onToggle }) => (
+  const MetricCard = ({ title, value, unit, status, icon: Icon, className = "", isSwitch = false, onToggle, category = "", field = "" }) => (
     <div className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${className}`}>
       {status && (
           <span className={`px-2 py-1 rounded-full text-[0.65rem] font-medium ${
@@ -127,7 +127,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           ) : (
             <div className="flex items-baseline space-x-1">
               <span className="text-2xl font-bold text-gray-900">
-                {typeof value === 'number' ? value.toFixed(1) : value}
+                {typeof value === 'number' ? (category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)) : value}
               </span>
               <span className="text-sm text-gray-500">{unit}</span>
             </div>
@@ -576,9 +576,9 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
         <div className="grid grid-cols-1 gap-6">
           <MetricCard
             title="柴油發電機"
-            value={dieselData.engineSwitch || dieselData.status?.state === 1}
+            value={dieselData.engineSwitch}
             icon={Power}
-            status={(dieselData.engineSwitch || dieselData.status?.state === 1) ? 'running' : 'standby'}
+            status={(dieselData.engineSwitch === true) ? 'running' : 'standby'}
             isSwitch={true}
             onToggle={toggleDieselEngine}
             className="border-2 shadow-lg"

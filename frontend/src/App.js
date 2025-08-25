@@ -185,9 +185,10 @@ const App = () => {
             }
           },
           diesel: {
-            engineSwitch: data.devices.diesel?.status?.includes('ON') || false,
+            engineSwitch: data.devices.diesel?.status?.includes('Started') || false,
             status: {
-              state: data.devices.diesel?.status?.includes('Stopped') ? 0 : 1,
+              Mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
+              ACB: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
               frequency: data.devices.diesel?.frequency || 0,
               oilPressure: data.devices.diesel?.oilpressure || 0,
               coolantTemp: data.devices.diesel?.coolertemperature || 0,
