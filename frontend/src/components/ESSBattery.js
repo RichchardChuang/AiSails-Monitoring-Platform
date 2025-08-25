@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Gauge } from 'lucide-react';
+import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Gauge,RefreshCw } from 'lucide-react';
 
 const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => {
   const [activeTab, setActiveTab] = useState('ups');
   const [isAdmin, setIsAdmin] = useState(true); // TODO: 從權限管理系統獲取
   const [isEditing, setIsEditing] = useState({});
   const [isExecuting, setIsExecuting] = useState(false);
-  
+  const [originalValues, setOriginalValues] = useState({});
+
   const essData = realTimeData.ess;
 
   // 發送命令到後端並記錄 log
@@ -78,18 +79,160 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => 
         ...prev.ess,
         [category]: {
           ...prev.ess[category],
-          [field]: parseFloat(value) || 0
+          [field]: value || 0
         }
       }
     }));
   };
 
-  const toggleEdit = (key) => {
-    setIsEditing(prev => ({
+const frequencyReset = async (category, field, InputValue) => {
+  setRealTimeData(prev => ({
+    ...prev,
+    ess: {
+      ...prev.ess,
+      [category]: {
+        ...prev.ess[category],
+        [field]: InputValue
+      }
+    }
+  }));
+  // 發送命令到後端
+  await sendCommand(category, "pcs_freq_reset", `調整頻率重置為${InputValue}Hz`);
+};
+
+const toggleEditWithValue = async (key, currentInputValue) => {
+  const [category, field] = key.split('_');
+  
+  // 先更新狀態
+  handleValueChange(category, field, currentInputValue);
+  
+  // 頻率控制的特殊處理
+  if (category === 'pcs' && field === 'frequency') {
+    // 檢查數值範圍
+    if (currentInputValue < 59.77) {
+      alert('頻率值太低！請設定在 59.77-60 Hz 之間');
+      const originalValue = originalValues[key];
+      if (originalValue !== undefined) {
+        handleValueChange(category, field, originalValue);
+      }
+      return;
+    }
+    if (currentInputValue > 60) {
+      alert('頻率值太高！請設定在 59.77-60 Hz 之間');
+      const originalValue = originalValues[key];
+      if (originalValue !== undefined) {
+        handleValueChange(category, field, originalValue);
+      }
+      return;
+    }
+    
+    // 取得原始值進行比較
+    const originalValue = originalValues[key];
+    
+    if (originalValue !== undefined) {
+      let action;
+      if (currentInputValue > originalValue) {
+        action = 'pcs_freq_up';
+      } else if (currentInputValue < originalValue) {
+        action = 'pcs_freq_down';
+      } else {
+        // 值沒有改變，只切換編輯狀態
+        setIsEditing(prev => ({
+          ...prev,
+          [key]: false
+        }));
+        return;
+      }
+      
+      // 發送命令到後端
+      await sendCommand(category, action, `調整頻率為${currentInputValue}Hz`);
+    }
+  }
+  
+  // 切換編輯狀態
+  setIsEditing(prev => ({
+    ...prev,
+    [key]: false
+  }));
+};
+
+const toggleEdit = async (key) => {
+  const isCurrentlyEditing = isEditing[key];
+
+  if (isCurrentlyEditing) {
+    const [category, field] = key.split('_');
+    const currentValue = essData[category][field];
+      // 取得原始值
+  const originalValue = originalValues[key] || essData[category][field];
+    // 頻率控制的特殊處理
+    if (category === 'pcs' && field === 'frequency') {
+      // 檢查數值範圍
+      // 方法2：將函數定義移到 if 判斷內部
+      if (currentValue < 59.77) {
+        alert('頻率值太低！請設定在 59.77-60 Hz 之間');
+        const originalValue = originalValues[key] || essData[category][field];
+        setRealTimeData(prev => ({
+          ...prev,
+          ess: {
+            ...prev.ess,
+            [category]: {
+              ...prev.ess[category],
+              [field]: originalValue
+            }
+          }
+        }));
+        return;
+      }
+      if (currentValue > 60) {
+        alert('頻率值太高！請設定在 59.77-60 Hz 之間');
+        const originalValue = originalValues[key] || essData[category][field];
+        setRealTimeData(prev => ({
+          ...prev,
+          ess: {
+            ...prev.ess,
+            [category]: {
+              ...prev.ess[category],
+              [field]: originalValue
+            }
+          }
+        }));
+        return;
+      }
+      
+
+      
+      let action;
+      if (currentValue > originalValue) {
+        action = 'pcs_freq_up';
+      } else if (currentValue < originalValue) {
+        action = 'pcs_freq_down';
+      } else {
+        // 值沒有改變，不需要發送命令
+        setIsEditing(prev => ({
+          ...prev,
+          [key]: !prev[key]
+        }));
+        return;
+      }
+      
+      // 發送命令到後端
+      await sendCommand(category, action, `調整頻率為${currentValue}Hz`);
+    }
+  } else {
+    // 進入編輯模式時，保存原始值
+    const [category, field] = key.split('_');
+    setOriginalValues(prev => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: essData[category][field]
     }));
-  };
+  }
+  
+  // 切換編輯狀態
+  setIsEditing(prev => ({
+    ...prev,
+    [key]: !prev[key]
+  }));
+};
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, isSwitch = false, onToggle, className = "", editable = false, category = "", field = "" }) => (
     <div className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${className}`}>
@@ -113,15 +256,44 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => 
             <h3 className="font-semibold text-gray-900 whitespace-nowrap pr-2">{title}</h3>
             {editable && isAdmin && (
               <button
-                onClick={() => toggleEdit(`${category}_${field}`)}
+                onClick={() => {
+                  if (isEditing[`${category}_${field}`]) {
+                    const inputElement = document.querySelector(`input[data-category="${category}"][data-field="${field}"]`);
+                    const currentInputValue = inputElement ? parseFloat(inputElement.value) : value;
+                    toggleEditWithValue(`${category}_${field}`, currentInputValue);
+                  } else {
+                    toggleEdit(`${category}_${field}`);
+                  }
+                }}
                 className="text-xs text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap"
               >
                 {isEditing[`${category}_${field}`] ? '完成' : '手動調整'}
               </button>
             )}
+            {editable && isAdmin && (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    const InputValue = 60.00;
+                    // 重設為 60.00
+                    frequencyReset(category, field, InputValue);
+                    // 如果正在編輯模式，也要更新 input 的值
+                    if (isEditing[`${category}_${field}`]) {
+                      const inputElement = document.querySelector(`input[data-category="${category}"][data-field="${field}"]`);
+                      if (inputElement) {
+                        inputElement.value = InputValue;
+                      }
+                    }
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                  title="重設為 60Hz"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
       </div>
       
       <div className="flex items-center justify-between">
@@ -140,18 +312,20 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => 
           ) : editable && isAdmin && isEditing[`${category}_${field}`] ? (
             <div className="flex items-center space-x-2">
               <input
+                data-category={category}
+                data-field={field}
                 type="number"
-                step="0.1"
-                value={value}
-                onChange={(e) => handleValueChange(category, field, e.target.value)}
+                step="0.01"
+                defaultValue={value}
+                // onBlur={(e) => handleValueChange(category, field, e.target.value)}
                 className="w-20 px-2 py-1 text-lg font-bold border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <span className="text-sm text-gray-500">{unit}</span>
             </div>
           ) : (
             <div className="flex items-baseline space-x-1">
-              <span className="text-2xl font-bold text-gray-900">
-                {typeof value === 'number' ? value.toFixed(1) : value}
+              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ?  'text-3xl' : 'text-2xl'}`}>
+                {typeof value === 'number' ?(category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)): value}
               </span>
               <span className="text-sm text-gray-500">{unit}</span>
               {editable && !isAdmin && (
@@ -519,7 +693,7 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => 
         {/* ESS 開關獨立一排 */}
         <div className="grid grid-cols-1 gap-6 mb-6">
           <MetricCard
-            title="ESS 開關"
+            title="電網建立 (ESS)"
             value={essData.switch || essData.ups?.switch}
             icon={Power}
             status={(essData.switch || essData.ups?.switch) ? 'activate' : 'inactive'}
