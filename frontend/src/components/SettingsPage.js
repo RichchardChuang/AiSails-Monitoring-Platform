@@ -481,7 +481,7 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
   const tabs = [
     { id: 'network', label: '網路設定', component: NetworkSettings },
-    { id: 'sitemap', label: '案場地圖', component: SiteMap },
+    { id: 'sitemap', label: '案場位置設定', component: SiteMap },
     // { id: 'system', label: '系統設定', component: SystemSettings }
   ];
 

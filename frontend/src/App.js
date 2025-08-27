@@ -29,7 +29,18 @@ const App = () => {
       status: 'inactive',
       voltage: 0,
       current: 0,
-      temperature: 0,
+      rack1: {
+        temperature:0
+      },
+      rack2: {
+        temperature:0
+      },
+      rack3: {
+        temperature:0
+      },
+      rack4: {
+        temperature:0
+      },
       ups: {
         load: 0,
         status: 'normal'
@@ -37,6 +48,7 @@ const App = () => {
       aircon: {
         status: 'Running',
         temperature: 3,
+        humidity: 50,
         mode: 'Cooling'
       },
       pcs: {
@@ -149,7 +161,19 @@ const App = () => {
             status: data.devices.sbms?.active ? 'active' : 'inactive',
             voltage: data.devices.sbms?.voltage || 0,
             current: data.devices.sbms?.current || 0,
-            temperature: data.devices.sbms?.temperature || 0,
+            rack1: {
+              temperature: data.devices.sbms?.rack1?.temperature || 0
+            },
+            rack2: {
+              temperature: data.devices.sbms?.rack2?.temperature || 0
+            },
+            rack3: {
+              temperature: data.devices.sbms?.rack3?.temperature || 0
+            },
+            rack4: {
+              temperature: data.devices.sbms?.rack4?.temperature || 0
+            },
+            // temperature: data.devices.sbms?.temperature || 0,
 
             // UPS 系統
             ups: {
@@ -161,6 +185,7 @@ const App = () => {
             aircon: {
               status: 'Running',
               temperature: 3,
+              humidity: 50,
               mode: 'Cooling'
             },
 

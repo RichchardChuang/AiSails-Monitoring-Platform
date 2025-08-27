@@ -53,7 +53,7 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => 
 
   const toggleESSSwitch = async () => {
     const newState = !essData.switch;
-    const action = newState ? 'power_on_sbms' : 'power_off_sbms';
+    const action = newState ? 'run_microgrid' : 'stop_microgrid';
     const description = newState ? 'ESS Battery 系統開啟' : 'ESS Battery 系統關閉';
     
     // 先發送命令到後端
@@ -307,7 +307,7 @@ const toggleEdit = async (key) => {
               } ${(!isAdmin || isExecuting) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {value ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-              <span className="font-medium">{value ? 'ON' : 'OFF'}</span>
+              <span className="font-medium">{value ? 'RUN' : 'STOP'}</span>
             </button>
           ) : editable && isAdmin && isEditing[`${category}_${field}`] ? (
             <div className="flex items-center space-x-2">
@@ -423,7 +423,7 @@ const toggleEdit = async (key) => {
 
   const AirConSystem = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <MetricCard
           title="運行狀態"
           value={essData.aircon.status}
@@ -431,9 +431,23 @@ const toggleEdit = async (key) => {
           status={essData.aircon.status === 'Running' ? 'activate' : 'offline'}
         />
         <MetricCard
-          title="溫度"
+          title="系統溫度"
           value={essData.aircon.temperature}
           unit="°C"
+          icon={Thermometer}
+          status="normal"
+        />
+        <MetricCard
+          title="空調製冷溫度設定"
+          value={essData.aircon.temperature}
+          unit="°C"
+          icon={Thermometer}
+          status="normal"
+        />
+        <MetricCard
+          title="濕度"
+          value={essData.aircon.humidity}
+          unit="%"
           icon={Thermometer}
           status="normal"
         />
@@ -701,26 +715,45 @@ const toggleEdit = async (key) => {
             onToggle={toggleESSSwitch}
           />
         </div>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
+          <MetricCard
+            title="Rack 1 溫度"
+            value={essData.rack1?.temperature}
+            unit="°C"
+            icon={Thermometer}
+            status={(essData.rack1?.temperature) > 5 ? 'warning' : 'normal'}
+          />
+          <MetricCard
+            title="Rack 2 溫度"
+            value={essData.rack2?.temperature}
+            unit="°C"
+            icon={Thermometer}
+            status={(essData.rack2?.temperature) > 5 ? 'warning' : 'normal'}
+          />
+          <MetricCard
+            title="Rack 3 溫度"
+            value={essData.rack3?.temperature}
+            unit="°C"
+            icon={Thermometer}
+            status={(essData.rack3?.temperature) > 5 ? 'warning' : 'normal'}
+          />
+          <MetricCard
+            title="Rack 4 溫度"
+            value={essData.rack4?.temperature}
+            unit="°C"
+            icon={Thermometer}
+            status={(essData.rack4?.temperature) > 5 ? 'warning' : 'normal'}
+          />
+        </div>
         
-        {/* 狀態 溫度並排 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* 充電電壓 充電電流並排 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <MetricCard
             title="狀態"
             value={essData.status || (essData.switch || essData.ups?.switch ? 'Active' : 'Inactive')}
             icon={Activity}
             status={essData.status === 'active' || (essData.switch || essData.ups?.switch) ? 'activate' : 'inactive'}
           />
-          <MetricCard
-            title="溫度"
-            value={essData.temperature || essData.ups?.temperature}
-            unit="°C"
-            icon={Thermometer}
-            status={(essData.temperature || essData.ups?.temperature) > 5 ? 'warning' : 'normal'}
-          />
-        </div>
-        
-        {/* 充電電壓 充電電流並排 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <MetricCard
             title="充電電壓"
             value={essData.voltage || essData.ups?.voltage}
