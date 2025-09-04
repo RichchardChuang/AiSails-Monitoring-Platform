@@ -70,6 +70,102 @@ const AddSiteModal = ({ onClose, onAdd, newSite, setNewSite }) => (
     </div>
 );
 
+const ConfigSection = ({ title, category, hasPort = true, settings, setSettings }) => (
+  <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+    <h3 className="text-lg font-semibold mb-4 flex items-center">
+      <Network className="w-5 h-5 mr-2 text-blue-600" />
+      {title}
+    </h3>
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">IP Address</label>
+        <input
+          type="text"
+          value={settings[category]?.ip || ''}
+          onChange={(e) => setSettings(prev => ({
+            ...prev,
+            [category]: {
+              ...prev[category],
+              ip: e.target.value
+            }
+          }))}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="192.168.1.xxx"
+        />
+      </div>
+      {hasPort && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Port</label>
+          <input
+            type="text"
+            value={settings[category]?.port || ''}
+            onChange={(e) => setSettings(prev => ({
+              ...prev,
+              [category]: {
+                ...prev[category],
+                port: e.target.value
+              }
+            }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="8000"
+          />
+        </div>
+      )}
+      <div className="flex items-center space-x-2 text-sm">
+        <div className={`w-2 h-2 rounded-full ${
+          settings[category]?.ip ? 'bg-green-500' : 'bg-gray-300'
+        }`}></div>
+        <span className="text-gray-600">
+          {settings[category]?.ip ? 'Configuration set' : 'Not configured'}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+const NetworkSettings = ({ settings, setSettings, handleSaveSettings }) => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ConfigSection title="Overview" category="overview" hasPort={false} settings={settings} setSettings={setSettings} />
+      <ConfigSection title="SBMS" category="sbms" settings={settings} setSettings={setSettings} />
+      <ConfigSection title="PCS" category="pcs" settings={settings} setSettings={setSettings} />
+      <ConfigSection title="DIESEL" category="diesel" settings={settings} setSettings={setSettings} />
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ConfigSection title="PN14" category="pn14" settings={settings} setSettings={setSettings} />
+      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <h3 className="text-lg font-semibold mb-4">網路測試</h3>
+        <div className="space-y-3">
+          {Object.entries(settings).map(([key, config]) => (
+            <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span className="font-medium capitalize">{key}</span>
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  config.ip ? 'bg-green-500' : 'bg-red-500'
+                }`}></div>
+                <span className="text-sm text-gray-600">
+                  {config.ip ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div className="flex justify-end">
+      <button
+        onClick={handleSaveSettings}
+        className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        <Save className="w-4 h-4" />
+        <span>儲存設定</span>
+      </button>
+    </div>
+  </div>
+);
+
 const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
   const [activeTab, setActiveTab] = useState('network');
   const [showPassword, setShowPassword] = useState(false);
@@ -151,7 +247,8 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
       lat: 24.098300,
       lng: 120.392965,
       description: '彰濱風力發電場',
-      status: 'active'
+      status: 'active',
+      isDefault: true
     },
     {
       id: 2,
@@ -171,15 +268,6 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
     }
   ]);
 
-  const handleSettingChange = (category, field, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [field]: value
-      }
-    }));
-  };
 
   const handleSaveSettings = async () => {
     try {
@@ -212,6 +300,21 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
   const handleDeleteSite = (id) => {
     // eslint-disable-next-line no-restricted-globals
     if (confirm('確定要刪除此案場嗎？')) {
+      // 找到要刪除的案場
+      const siteToDelete = sites.find(site => site.id === id);
+      
+      // 如果刪除的是當前案場，需要切換到其他案場
+      if (siteToDelete && currentSite === siteToDelete.name) {
+        // 找到第一個不是要刪除的案場作為預設
+        const remainingSites = sites.filter(site => site.id !== id);
+        if (remainingSites.length > 0) {
+          setCurrentSite(remainingSites[0].name);
+        } else {
+          // 如果沒有其他案場，設置為預設值
+          setCurrentSite('預設案場');
+        }
+      }
+      // 刪除案場
       setSites(prev => prev.filter(site => site.id !== id));
     }
   };
@@ -221,89 +324,7 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
     alert(`已切換至 ${siteName}`);
   };
 
-  const ConfigSection = ({ title, category, hasPort = true }) => (
-    <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold mb-4 flex items-center">
-        <Network className="w-5 h-5 mr-2 text-blue-600" />
-        {title}
-      </h3>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">IP Address</label>
-          <input
-            type="text"
-            value={settings[category]?.ip || ''}
-            onChange={(e) => handleSettingChange(category, 'ip', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="192.168.1.xxx"
-          />
-        </div>
-        {hasPort && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Port</label>
-            <input
-              type="text"
-              value={settings[category]?.port || ''}
-              onChange={(e) => handleSettingChange(category, 'port', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="8000"
-            />
-          </div>
-        )}
-        <div className="flex items-center space-x-2 text-sm">
-          <div className={`w-2 h-2 rounded-full ${
-            settings[category]?.ip ? 'bg-green-500' : 'bg-gray-300'
-          }`}></div>
-          <span className="text-gray-600">
-            {settings[category]?.ip ? 'Configuration set' : 'Not configured'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
 
-  const NetworkSettings = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ConfigSection title="Overview" category="overview" hasPort={false} />
-        <ConfigSection title="SBMS" category="sbms" />
-        <ConfigSection title="PCS" category="pcs" />
-        <ConfigSection title="DIESEL" category="diesel" />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ConfigSection title="PN14" category="pn14" />
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-4">網路測試</h3>
-          <div className="space-y-3">
-            {Object.entries(settings).map(([key, config]) => (
-              <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="font-medium capitalize">{key}</span>
-                <div className="flex items-center space-x-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    config.ip ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
-                  <span className="text-sm text-gray-600">
-                    {config.ip ? 'Connected' : 'Disconnected'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end">
-        <button
-          onClick={handleSaveSettings}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Save className="w-4 h-4" />
-          <span>儲存設定</span>
-        </button>
-      </div>
-    </div>
-  );
 
   const SiteMap = React.memo(() => (
     <div className="space-y-6">
@@ -480,12 +501,21 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
   );
 
   const tabs = [
-    { id: 'network', label: '網路設定', component: NetworkSettings },
-    { id: 'sitemap', label: '案場位置設定', component: SiteMap },
-    // { id: 'system', label: '系統設定', component: SystemSettings }
+    { id: 'network', label: '網路設定' },
+    { id: 'sitemap', label: '案場位置設定' },
+    // { id: 'system', label: '系統設定' }
   ];
 
-  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || NetworkSettings;
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case 'network':
+        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />;
+      case 'sitemap':
+        return <SiteMap />;
+      default:
+        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -513,7 +543,7 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
         </div>
         
         <div className="p-6">
-          <ActiveComponent />
+          {renderActiveComponent()}
         </div>
       </div>
 
