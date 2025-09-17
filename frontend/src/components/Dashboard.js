@@ -1,7 +1,58 @@
-import React from 'react';
-import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp, Cloud, Sun, CloudRain, Navigation } from 'lucide-react';
 
 const Dashboard = ({ realTimeData }) => {
+  const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    updateWeatherInfo();
+    const weatherInterval = setInterval(updateWeatherInfo, 60000); // 每1分鐘更新一次
+    return () => {
+      console.log('清除天氣更新間隔');
+      clearInterval(weatherInterval);
+    };
+  }, []);
+
+  const updateWeatherInfo = async () => {
+    try {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+        const data = await response.json();
+        
+        // 風向中文轉換
+        let windDir = '--';
+        if (typeof data.wind?.deg === 'number') {
+          const dirs = ['北', '北北東', '東北', '東北東', '東', '東南東', '東南', '南南東', '南', '南南西', '西南', '西南西', '西', '西北西', '西北', '北北西', '北'];
+          windDir = dirs[Math.round(data.wind.deg / 22.5) % 16];
+        }
+
+        setWeatherData({
+          location: data.name || '未知地點',
+          description: data.weather[0].description,
+          temperature: data.main.temp,
+          windSpeed: data.wind.speed,
+          windDeg: data.wind.deg,
+          windDir: windDir,
+          icon: data.weather[0].icon,
+          humidity: data.main.humidity,
+          pressure: data.main.pressure
+        });
+        setLoading(false);
+      }, (error) => {
+        console.error('地理位置錯誤:', error);
+        setWeatherData(null);
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error('天氣載入失敗:', error);
+      setWeatherData(null);
+      setLoading(false);
+    }
+  };
   const MetricCard = ({ title, value, unit, change, trend, className = "", children, onClick }) => (
     <div 
       className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
@@ -193,6 +244,91 @@ const Dashboard = ({ realTimeData }) => {
     </div>
   );
 
+  const WeatherCard = () => {
+    if (loading) {
+      return (
+        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!weatherData) {
+      return (
+        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-center h-40">
+            <div className="text-center text-gray-500">
+              <Cloud className="w-8 h-8 mx-auto mb-2" />
+              <p>無法取得天氣資訊</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-sm border border-gray-100 relative overflow-hidden">
+        {/* 背景裝飾 */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Weather conditions</h3>
+              <p className="text-blue-100 text-sm">{weatherData.location}</p>
+            </div>
+            <div className="flex items-center">
+              <img 
+                src={`https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`}
+                alt="天氣圖標" 
+                className="w-12 h-12"
+              />
+            </div>
+          </div>
+
+          <div className="mb-4">
+            <div className="flex items-baseline">
+              <span className="text-3xl font-bold">{weatherData.temperature.toFixed(1)}</span>
+              <span className="text-lg ml-1">°C</span>
+            </div>
+            <p className="text-blue-100 text-sm capitalize">{weatherData.description}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <Wind className="w-4 h-4" />
+              <div>
+                <p className="text-blue-100">風速</p>
+                <p className="font-semibold">{weatherData.windSpeed} m/s</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Navigation 
+                className="w-4 h-4" 
+                style={{ transform: `rotate(${weatherData.windDeg || 0}deg)` }}
+              />
+              <div>
+                <p className="text-blue-100">風向</p>
+                <p className="font-semibold">{weatherData.windDir}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-blue-100">濕度</p>
+              <p className="font-semibold">{weatherData.humidity}%</p>
+            </div>
+            <div>
+              <p className="text-blue-100">氣壓</p>
+              <p className="font-semibold">{weatherData.pressure} hPa</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* 頂部指標卡片 */}
@@ -239,13 +375,13 @@ const Dashboard = ({ realTimeData }) => {
       </div>
 
       {/* 主要圖表和信息區域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* 左側 - 系統分佈圖表 */}
         <div className="lg:col-span-1">
           <CategorySpendingChart />
         </div>
 
-        {/* 中間 - 能源生產卡片 */}
+        {/* 中間 - 能源生產卡片和效能指標 */}
         <div className="lg:col-span-1 space-y-6">
           <EnergyCard />
           
@@ -266,9 +402,9 @@ const Dashboard = ({ realTimeData }) => {
           </div>
         </div>
 
-        {/* 右側 - 最近活動 */}
+        {/* 右側 - 天氣狀況 */}
         <div className="lg:col-span-1">
-          <RecentAlerts />
+          <WeatherCard />
         </div>
       </div>
     </div>

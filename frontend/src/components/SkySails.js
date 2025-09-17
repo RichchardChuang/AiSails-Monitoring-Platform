@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Wind, Activity, Gauge, TrendingUp, Power, AlertTriangle, CheckCircle } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SkySails = ({ realTimeData, setRealTimeData }) => {
   const [chartTimeRange, setChartTimeRange] = useState('1h');
@@ -53,13 +54,16 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
     const points = chartTimeRange === '1h' ? 60 : chartTimeRange === '24h' ? 24 : 7;
     const data = [];
     for (let i = points; i >= 0; i--) {
+      const currentWindSpeed = Math.max(0, skysailsData.windSpeed + (Math.random() - 0.5) * 8);
+      
       data.push({
         time: chartTimeRange === '1h' ? `${i}m ago` : 
               chartTimeRange === '24h' ? `${i}h ago` : 
               `${i}d ago`,
-        windSpeed: Math.max(0, skysailsData.windSpeed + (Math.random() - 0.5) * 8),
+        windSpeed: currentWindSpeed,
         tension: Math.max(0, skysailsData.tension + (Math.random() - 0.5) * 500),
-        power: Math.max(0, (skysailsData.windSpeed + (Math.random() - 0.5) * 8) * 100)
+        // 功率根據風速計算，風速的立方關係更接近實際風力發電
+        power: Math.max(0, Math.min(100, Math.pow(currentWindSpeed / 15, 3) * 80 + (Math.random() - 0.5) * 10))
       });
     }
     return data.reverse();
@@ -89,60 +93,66 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
       </div>
       
       <div className="h-64 relative">
-        <svg className="w-full h-full" viewBox="0 0 400 200">
-          {/* Grid lines */}
-          {Array.from({length: 5}, (_, i) => (
-            <line
-              key={i}
-              x1="40"
-              y1={40 + i * 32}
-              x2="380"
-              y2={40 + i * 32}
-              stroke="#f3f4f6"
-              strokeWidth="1"
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+            <XAxis 
+              dataKey="time" 
+              axisLine={true}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: '#6b7280' }}
             />
-          ))}
-          
-          {/* Chart line */}
-          <polyline
-            fill="none"
-            stroke="#3b82f6"
-            strokeWidth="2"
-            points={chartData.map((point, index) => 
-              `${40 + (index * 340 / (chartData.length - 1))},${180 - (point.windSpeed * 8)}`
-            ).join(' ')}
-          />
-          
-          {/* Data points */}
-          {chartData.map((point, index) => (
-            <circle
-              key={index}
-              cx={40 + (index * 340 / (chartData.length - 1))}
-              cy={180 - (point.windSpeed * 8)}
-              r="3"
-              fill="#3b82f6"
+            {/* 左側 Y 軸 - 風速 */}
+            <YAxis 
+              yAxisId="left"
+              domain={[0, 25]}
+              axisLine={true}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: '#6b7280' }}
+              label={{ value: '風速 (m/s)', angle: -90, position: 'insideLeft' }}
             />
-          ))}
-          
-          {/* Y-axis labels */}
-          {Array.from({length: 5}, (_, i) => (
-            <text
-              key={i}
-              x="35"
-              y={185 - i * 32}
-              fill="#6b7280"
-              fontSize="10"
-              textAnchor="end"
-            >
-              {i * 5}
-            </text>
-          ))}
-        </svg>
-        
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between px-10 text-xs text-gray-500">
-          <span>{chartData[0]?.time}</span>
-          <span>Now</span>
-        </div>
+            {/* 右側 Y 軸 - 功率 */}
+            <YAxis 
+              yAxisId="right"
+              orientation="right"
+              domain={[0, 100]}
+              axisLine={true}
+              tickLine={false}
+              tick={{ fontSize: 10, fill: '#6b7280' }}
+              label={{ value: '功率 (kW)', angle: 90, position: 'insideRight' }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'white', 
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}
+            />
+            {/* 風速線 - 使用左側 Y 軸 */}
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey="windSpeed" 
+              stroke="#3b82f6" 
+              strokeWidth={2}
+              dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
+              activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2 }}
+              name="風速"
+            />
+            {/* 功率線 - 使用右側 Y 軸 */}
+            <Line 
+              yAxisId="right"
+              type="monotone" 
+              dataKey="power" 
+              stroke="#ef4444" 
+              strokeWidth={2}
+              dot={{ fill: '#ef4444', strokeWidth: 0, r: 3 }}
+              activeDot={{ r: 5, stroke: '#ef4444', strokeWidth: 2 }}
+              name="功率"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

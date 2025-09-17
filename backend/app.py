@@ -527,7 +527,7 @@ def control_device():
         "pcs_fault_reset", "pcs_freq_up","pcs_freq_down","pcs_freq_reset","pcs_read_summary",
         "pcs_run_microgrid", "pcs_stop_microgrid",
         "power_off_sbms", "power_on_sbms",
-        "start", "stop"]:
+        "run_microgrid", "stop_microgrid"]:
         return jsonify({"success": False, "error": "Invalid control command"}), 400
 
     ip_address = devices[device]["ip"] if device != "system" else None

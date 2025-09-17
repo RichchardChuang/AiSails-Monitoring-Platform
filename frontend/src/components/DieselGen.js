@@ -176,22 +176,24 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900 mb-3">運行狀態</h4>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">啟動模式</span>
+              <span className="font-medium">{dieselData.status.Mode === 0 ? '自動' : '手動'}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">主機狀態</span>
               <span className={`font-medium ${dieselData.status.state === 0 ? 'text-blue-600' : 'text-green-600'}`}>
                 {dieselData.status.state === 0 ? '待機' : '運行'}
               </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">啟動模式</span>
-              <span className="font-medium">自動</span>
+              <span className="text-gray-700">ACB</span>
+              <span className={`font-medium ${dieselData.status.ACB === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {dieselData.status.ACB === 0 ? 'OFF' : 'ON'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">運行時間</span>
               <span className="font-medium">0 小時</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">上次啟動</span>
-              <span className="font-medium">2025-07-15</span>
             </div>
           </div>
           
