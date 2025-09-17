@@ -438,7 +438,7 @@ const toggleEdit = async (key) => {
           status="normal"
         />
         <MetricCard
-          title="空調製冷溫度設定"
+          title="製冷設定"
           value={essData.aircon.temperature}
           unit="°C"
           icon={Thermometer}
