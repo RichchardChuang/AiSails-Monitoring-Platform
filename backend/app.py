@@ -1,176 +1,15 @@
-from flask import Flask, jsonify, request, render_template, send_file
+from flask import Flask, jsonify, request, render_template
 import modbus_tk.defines as cst
 from modbus_tk import modbus_tcp,hooks
 import configparser
 from threading import Lock, Thread
 import logging,time
 from modbus_tk.utils import create_logger   
-
-import os
-from flask_cors import CORS
-import psutil
-import time
-import json
-from datetime import datetime
-
 app = Flask(__name__)
-# CORS 設定 - 允許前端連接
-CORS(app)
 
-# 模擬監控數據存儲
-monitoring_data = []
-
-@app.route('/api/system-info', methods=['GET'])
-def get_system_info():
-    """獲取系統基本信息"""
-    try:
-        system_info = {
-            'cpu_percent': psutil.cpu_percent(interval=1),
-            'memory': {
-                'total': psutil.virtual_memory().total,
-                'available': psutil.virtual_memory().available,
-                'percent': psutil.virtual_memory().percent,
-                'used': psutil.virtual_memory().used,
-                'free': psutil.virtual_memory().free
-            },
-            'disk': {
-                'total': psutil.disk_usage('/').total,
-                'used': psutil.disk_usage('/').used,
-                'free': psutil.disk_usage('/').free,
-                'percent': psutil.disk_usage('/').percent
-            },
-            'timestamp': datetime.now().isoformat()
-        }
-        return jsonify(system_info)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/cpu-history', methods=['GET'])
-def get_cpu_history():
-    """獲取CPU使用率歷史數據"""
-    try:
-        # 獲取最近30個數據點
-        history = []
-        for i in range(30):
-            cpu_percent = psutil.cpu_percent(interval=0.1)
-            history.append({
-                'timestamp': datetime.now().isoformat(),
-                'value': cpu_percent
-            })
-            time.sleep(0.1)
-        
-        return jsonify({'history': history})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/processes', methods=['GET'])
-def get_processes():
-    """獲取進程列表"""
-    try:
-        processes = []
-        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
-            try:
-                proc_info = proc.info
-                processes.append({
-                    'pid': proc_info['pid'],
-                    'name': proc_info['name'],
-                    'cpu_percent': proc_info['cpu_percent'],
-                    'memory_percent': proc_info['memory_percent']
-                })
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        
-        # 按CPU使用率排序，取前10個
-        processes.sort(key=lambda x: x['cpu_percent'] or 0, reverse=True)
-        return jsonify({'processes': processes[:10]})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/alerts', methods=['GET'])
-def get_alerts():
-    """獲取警告信息"""
-    try:
-        alerts = []
-        cpu_percent = psutil.cpu_percent(interval=1)
-        memory_percent = psutil.virtual_memory().percent
-        disk_percent = psutil.disk_usage('/').percent
-        
-        if cpu_percent > 80:
-            alerts.append({
-                'type': 'warning',
-                'message': f'CPU使用率過高: {cpu_percent:.1f}%',
-                'timestamp': datetime.now().isoformat()
-            })
-        
-        if memory_percent > 85:
-            alerts.append({
-                'type': 'error',
-                'message': f'記憶體使用率過高: {memory_percent:.1f}%',
-                'timestamp': datetime.now().isoformat()
-            })
-        
-        if disk_percent > 90:
-            alerts.append({
-                'type': 'error',
-                'message': f'磁碟空間不足: {disk_percent:.1f}%',
-                'timestamp': datetime.now().isoformat()
-            })
-        
-        return jsonify({'alerts': alerts})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/settings', methods=['GET', 'POST'])
-def handle_settings():
-    """處理設定"""
-    if request.method == 'GET':
-        # 返回當前設定
-        settings = {
-            'refresh_interval': 5000,  # 毫秒
-            'cpu_threshold': 80,
-            'memory_threshold': 85,
-            'disk_threshold': 90
-        }
-        return jsonify(settings)
-    
-    elif request.method == 'POST':
-        # 更新設定
-        try:
-            data = request.get_json()
-            # 這裡可以將設定保存到數據庫或配置文件
-            return jsonify({'message': '設定已更新', 'settings': data})
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'API endpoint not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': 'Internal server error'}), 500
-# --------------old code-------------------------
-# # 讀取配置文件
-# # current_dir = os.path.dirname(os.path.abspath(__file__))
-# config_path = os.path.join(os.path.dirname(__file__), 'config.cfg')
-# # parent_dir = os.path.dirname(current_dir)
-# # config_path = os.path.join(parent_dir, 'config.cfg')
-# config = configparser.ConfigParser()
-# # config.read(config_path)
-# config.read('config.cfg')
-# time.sleep(1)
-# if not config.sections():
-#     print(f"Warning: Could not read config file from 'config.cfg'")
-
-current_dir = os.getcwd()
-print(f"當前工作目錄: {current_dir}")
-
-# 假設 config.cfg 在上一層，可以拼接路徑
-config_path = os.path.join(current_dir, '../config.cfg')
+# 讀取配置文件
 config = configparser.ConfigParser()
-
-# 嘗試讀取配置文件
-config.read(config_path)
+config.read('config.cfg')
 
 # 設備連接池
 devices = {
@@ -258,43 +97,62 @@ def check_connections():
         for name, dev in devices.items():
             try:
                 with lock:
-                    master = modbus_tcp.TcpMaster(dev["ip"], dev["port"])
+                    master = modbus_tcp.TcpMaster(dev["ip"], dev["port"], timeout_in_sec = 1 )
                     master.set_timeout(1)
-                    master.execute(1, cst.READ_HOLDING_REGISTERS, 0, 1)
+                    master.execute(1, cst.READ_HOLDING_REGISTERS, 0, 1) #Check the device is exist
                     dev["connected"] = True
                     masters[name] = master
-                    
+                     
                     if name == "pcs": # Read PCS Summary 2101
                         summary_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 2101, 12)
-                        devices[name]["pcsstatus"] = summary_data[0]
-                        devices[name]["gridstatus"] = summary_data[1]
+                        devices[name]["pcsstatus"] = 'Fault' if summary_data[0] & 0x8 == 8 else 'Normal'
+                        devices[name]["gridstatus"] = 'Charging' if summary_data[1] & 0x1 == 1 else 'Discharge'
                         devices[name]["current"] = summary_data[2] / 10
                         devices[name]["active"] = True if devices[name]["current"] > 0 else False
                         
                         # operationmode
                         mode_map = {0: 'AFE', 1: 'Island', 2: 'Micro Grid'}
                         devices[name]["operationmode"] = mode_map.get(summary_data[3], str(summary_data[3]))
+                         
+                        # 取得有號16位元整數if summary_data[4] >= 0 else -summary_data[4]
+                        raw_power = summary_data[4]
+                        if raw_power >= 0x8000:
+                            raw_power = raw_power - 0x10000
+                        devices[name]["power"] = raw_power 
                         
-                        devices[name]["power"] = summary_data[4] / 100
                         devices[name]["frequency"] = summary_data[5] / 100
                         devices[name]["supplyfrequency"] = summary_data[6] / 100
                         devices[name]["temperature"] = summary_data[7]
-                        devices[name]["dcvoltage"] = summary_data[8] / 10
-                        devices[name]["fault"] = summary_data[9]
-                        devices[name]["linevoltage"] = summary_data[10] / 10
-                        devices[name]["linefrequency"] = summary_data[11] / 10
+                        devices[name]["dcvoltage"] = summary_data[8] 
+                        devices[name]["fault"] = 'Not found' if summary_data[9] == 0 else 'Error!'
+                        devices[name]["linevoltage"] = summary_data[10] 
+                        devices[name]["linefrequency"] = summary_data[11] / 100
                     
                     elif name == "sbms": # Read SBMS Data
-                        sbms_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 500, 10)
+                        #Alarm flags all in discrete registers
+                        result = master.execute(1, cst.READ_DISCRETE_INPUTS, 1, 80)
+                        #Summary(holding registers)
+                        result = master.execute(1, cst.READ_HOLDING_REGISTERS, 500, 12)
+                        #Summary(input registers)
+                        sbms_data = master.execute(1, cst.READ_INPUT_REGISTERS, 1, 47)
                         devices[name]["power"] = sbms_data[0] / 10
-                        devices[name]["voltage"] = sbms_data[1] / 10 if len(sbms_data) > 1 else 0
-                        devices[name]["current"] = sbms_data[2] / 10 if len(sbms_data) > 2 else 0
-                        devices[name]["temperature"] = sbms_data[3] if len(sbms_data) > 3 else 0
-                        devices[name]["soc"] = sbms_data[4] if len(sbms_data) > 4 else 0
-                        devices[name]["soh"] = sbms_data[5] if len(sbms_data) > 5 else 0
-                        devices[name]["capacity"] = sbms_data[6] / 10 if len(sbms_data) > 6 else 0
-                        devices[name]["active"] = sbms_data[7] == 1 if len(sbms_data) > 7 else False
-                        devices[name]["status"] = "Active" if devices[name]["active"] else "Inactive"
+                        devices[name]["voltage"] = sbms_data[1] / 10 
+                        devices[name]["current"] = (sbms_data[2] - 16000) / 10 
+                        devices[name]["soc"] = sbms_data[3] 
+                        devices[name]["soh"] = sbms_data[4] 
+                        devices[name]["temperature"] = sbms_data[41] - 40 #讀值減去 40 為實際溫度
+                        
+                        # active status 
+                        act_map = {0: 'Inital',                 1: 'Charging',               2: 'Discharging', 
+                                   3: 'Ready' ,                 4: 'Maintenance',            5: 'Charge prohibition',
+                                   6: 'discharge prohibition',  7: 'Charging - Discharging probibition', 8: 'Fault',
+                                   9: 'Fault recovery',        10: 'Test mode',             11: 'Power-off',
+                                  12: 'Power-off complete'}
+                        devices[name]["active"] = act_map.get(sbms_data[42], str(sbms_data[42]))
+                        
+                        # charge discharge state
+                        charge_map = {0: 'Others', 1: 'Discharge', 2: 'Charge'}
+                        devices[name]["status"] = charge_map.get(sbms_data[43], str(sbms_data[43]))
                     
                     elif name == "diesel": # Read Diesel Generator Data 100
                         dg_data = master.execute(1, cst.READ_HOLDING_REGISTERS, 100, 16)  # 確保讀取16個寄存器
@@ -316,7 +174,7 @@ def check_connections():
                         # 狀態判斷簡化與合併
                         status_bits = dg_data[14]
                         status = "Manual" if status_bits & 0x08 else "Auto"
-                        status += " Started" if status_bits & 0x01 else " Stopped"
+                        status += " Started" if status_bits & 0x01 else "Stopped"
                         status += " ACB ON" if status_bits & 0x20 else " ACB OFF"
                         devices[name]["status"] = status
                         
@@ -344,8 +202,8 @@ def check_connections():
 @app.route('/')
 def index():
     """前端頁面"""
-    html_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend/public/index.html'))
-    return send_file(html_path)
+    return render_template('index.html')
+
 @app.route('/status')
 def get_status():
     """獲取所有設備狀態"""
@@ -399,6 +257,7 @@ def get_status():
                     "soc": dev.get("soc"),
                     "soh": dev.get("soh"),
                     "active": dev.get("active"),
+                    "status": dev.get("status"),
                     "voltage": dev.get("voltage"),
                     "capacity": dev.get("capacity"),
                     "temperature": dev.get("temperature"),
@@ -421,10 +280,61 @@ def execute_modbus_command(master, action):
     """執行Modbus命令的通用邏輯"""
     start = time.time()
     try:
-        if action == "operation":
-            master.execute(1, cst.READ_HOLDING_REGISTERS, 501, 1)
-        elif action == "shutdown":
-            master.execute(1, cst.READ_HOLDING_REGISTERS, 501, 1)
+        if action == "start_microgrid":
+            # 1. 執行 sbms 設備 clear_sbms_fault
+            sbms_master = masters.get("sbms")
+            if not sbms_master:
+                raise Exception("SBMS設備未連接")
+            sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 501, output_value=1)
+            add_log("SBMS執行clear_sbms_fault完成")
+            time.sleep(30)
+            # 2. 執行 sbms 設備 power_on_sbms
+            sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 501, output_value=1)
+            time.sleep(10)
+            sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 503, output_value=1)
+            add_log("SBMS執行power_on_sbms完成")
+            time.sleep(30)
+            # 3. 執行 sbms 設備 close_precharge_switch
+            sbms_master.execute(1, cst.READ_HOLDING_REGISTERS, 8, 1)
+            sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 8, output_value=7)
+            add_log("SBMS執行close_precharge_switch完成")
+            time.sleep(30)
+            # 4. 執行 sbms 設備 close_dc_switch
+            if sbms_master.execute(1, cst.READ_HOLDING_REGISTERS, 5, 1) != 2:
+                sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 5, output_value=2)
+            add_log("SBMS執行close_dc_switch完成")
+            time.sleep(30)
+            # 5. 執行 pcs 設備 pcs_fault_reset
+            pcs_master = masters.get("pcs")
+            if not pcs_master:
+                raise Exception("PCS設備未連接")
+            pcs_master.execute(1, cst.WRITE_SINGLE_REGISTER, 2000, output_value=128)
+            time.sleep(5)
+            pcs_master.execute(1, cst.WRITE_SINGLE_REGISTER, 2000, output_value=0)
+            add_log("PCS執行pcs_fault_reset完成")
+            time.sleep(30)
+            # 6. 執行 pcs 設備 pcs_run_microgrid
+            pcs_master.execute(1, cst.WRITE_SINGLE_REGISTER, 2000, output_value=1024 + 1 + 8)
+            add_log("PCS執行pcs_run_microgrid完成")
+        elif action == "stop_microgrid":
+            # 1. 執行PCS設備pcs_stop_microgrid命令
+            pcs_master = masters.get("pcs")
+            if not pcs_master:
+                raise Exception("PCS設備未連接")
+            pcs_master.execute(1, cst.WRITE_SINGLE_REGISTER, 2000, output_value=1024)
+            add_log("PCS執行pcs_stop_microgrid完成")
+            time.sleep(30)
+            # 2. 執行ESS設備open_dc_switch命令
+            sbms_master = masters.get("sbms")
+            if not sbms_master:
+                raise Exception("ESS設備未連接")
+            if sbms_master.execute(1, cst.READ_HOLDING_REGISTERS, 5, 1) != 1:
+                sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 5, output_value=1)
+            add_log("ESS執行open_dc_switch完成")
+            time.sleep(30)
+            # 3. 執行power_off_sbms命令
+            sbms_master.execute(1, cst.WRITE_SINGLE_REGISTER, 503, output_value=2)
+            add_log("ESS執行power_off_sbms完成")
         elif action == "start_dg":
             master.execute(1, cst.WRITE_SINGLE_REGISTER, 0x0007, output_value=1)
         elif action == "stop_dg":
@@ -618,7 +528,6 @@ import os
 
 log_buffer = deque(maxlen=500)
 LOG_FILE = "logs.txt"
-# LOG_FILE = logs_path
 log_lock = threading.Lock()
 
 def add_log(msg):
@@ -641,4 +550,4 @@ def get_logs():
 
 if __name__ == "__main__":
     Thread(target=check_connections, daemon=True).start()
-    app.run(host='0.0.0.0', port=5000,debug=True)
+    app.run(host='0.0.0.0', port=5000)

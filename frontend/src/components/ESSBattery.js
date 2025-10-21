@@ -253,7 +253,7 @@ const toggleEdit = async (key) => {
             <Icon className="w-5 h-5 text-blue-600" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-gray-900 whitespace-nowrap pr-2">{title}</h3>
+            <h3 className="text-sm xl:text-base font-semibold text-gray-900 whitespace-nowrap pr-2">{title}</h3>
             {editable && isAdmin && (
               <button
                 onClick={() => {
@@ -307,7 +307,7 @@ const toggleEdit = async (key) => {
               } ${(!isAdmin || isExecuting) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {value ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-              <span className="font-medium">{value ? 'RUN' : 'STOP'}</span>
+              <span className="font-medium text-xl">{value ? 'RUN' : 'STOP'}</span>
             </button>
           ) : editable && isAdmin && isEditing[`${category}_${field}`] ? (
             <div className="flex items-center space-x-2">
@@ -324,7 +324,7 @@ const toggleEdit = async (key) => {
             </div>
           ) : (
             <div className="flex items-baseline space-x-1">
-              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ?  'text-3xl' : 'text-2xl'}`}>
+              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ? 'text-2xl xl:text-3xl' : 'text-2xl xl:text-3xl'}`}>
                 {typeof value === 'number' ?(category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)): value}
               </span>
               <span className="text-sm text-gray-500">{unit}</span>
@@ -423,7 +423,7 @@ const toggleEdit = async (key) => {
 
   const AirConSystem = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 xl:gap-3">
         <MetricCard
           title="運行狀態"
           value={essData.aircon.status}
@@ -717,28 +717,28 @@ const toggleEdit = async (key) => {
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6'>
           <MetricCard
-            title="Rack 1 溫度"
+            title="Rack 1"
             value={essData.rack1?.temperature}
             unit="°C"
             icon={Thermometer}
             status={(essData.rack1?.temperature) > 5 ? 'warning' : 'normal'}
           />
           <MetricCard
-            title="Rack 2 溫度"
+            title="Rack 2"
             value={essData.rack2?.temperature}
             unit="°C"
             icon={Thermometer}
             status={(essData.rack2?.temperature) > 5 ? 'warning' : 'normal'}
           />
           <MetricCard
-            title="Rack 3 溫度"
+            title="Rack 3"
             value={essData.rack3?.temperature}
             unit="°C"
             icon={Thermometer}
             status={(essData.rack3?.temperature) > 5 ? 'warning' : 'normal'}
           />
           <MetricCard
-            title="Rack 4 溫度"
+            title="Rack 4"
             value={essData.rack4?.temperature}
             unit="°C"
             icon={Thermometer}

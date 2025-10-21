@@ -271,11 +271,38 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
   const handleSaveSettings = async () => {
     try {
-      await apiRequest('/settings', {
+      // 轉換前端格式為後端期望的 config.cfg 格式
+      const configData = {
+        overview: {
+          overview_ip: settings.overview?.ip || ''
+        },
+        devices: {
+          sbms_ip: settings.sbms?.ip || '',
+          sbms_port: settings.sbms?.port || '',
+          pcs_ip: settings.pcs?.ip || '',
+          pcs_port: settings.pcs?.port || '',
+          diesel_ip: settings.diesel?.ip || '',
+          diesel_port: settings.diesel?.port || '',
+          pn14_ip: settings.pn14?.ip || '',
+          pn14_port: settings.pn14?.port || ''
+        }
+      };
+
+      const response = await fetch('/save-config', {
         method: 'POST',
-        body: JSON.stringify(settings)
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(configData)
       });
-      alert('設定已儲存成功！');
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        alert('設定已儲存成功！');
+      } else {
+        throw new Error(result.message || '儲存失敗');
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
       alert('設定儲存失敗，請稍後再試。');

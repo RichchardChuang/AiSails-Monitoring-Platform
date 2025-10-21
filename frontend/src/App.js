@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wind, Battery, Zap, Fuel,RotateCw , AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, BarChart3, Gauge, Menu, X, User, Search, Bell, FileText } from 'lucide-react';
+import { PublicClientApplication } from '@azure/msal-browser';
 
 // 導入各個頁面組件
 import Dashboard from './components/Dashboard';
@@ -17,6 +18,11 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authError, setAuthError] = useState(null);
+
   const [currentSite, setCurrentSite] = useState('Site 彰濱');
   const [realTimeData, setRealTimeData] = useState({
     skysails: {
@@ -73,7 +79,8 @@ const App = () => {
     diesel: {
       engineSwitch: false,
       status: {
-        state: 0,
+        mode: 0,
+        acb:0,
         frequency: 0,
         oilPressure: 0,
         coolantTemp: 0,
@@ -98,6 +105,17 @@ const App = () => {
       }
     }
   });
+
+  // 自動清除認證錯誤 (10秒後)
+  useEffect(() => {
+    if (authError) {
+      const timer = setTimeout(() => {
+        setAuthError(null);
+      }, 10000); // 10秒
+
+      return () => clearTimeout(timer);
+    }
+  }, [authError]);
 
   // API 請求函數
   const apiRequest = async (endpoint, options = {}) => {
@@ -212,8 +230,8 @@ const App = () => {
           diesel: {
             engineSwitch: data.devices.diesel?.status?.includes('Started') || false,
             status: {
-              Mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
-              ACB: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
+              mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
+              acb: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
               frequency: data.devices.diesel?.frequency || 0,
               oilPressure: data.devices.diesel?.oilpressure || 0,
               coolantTemp: data.devices.diesel?.coolertemperature || 0,
@@ -245,6 +263,66 @@ const App = () => {
       throw err;
     }
   };
+
+  // 初始化 MSAL 並自動登入
+  useEffect(() => {
+    const initializeMsal = async () => {
+      try {
+        console.log('開始初始化 MSAL...');
+        setAuthError(null);
+
+        // 從後端獲取 MSAL 配置
+        console.log('正在獲取 AAD 配置...');
+        const response = await fetch('/aad-config');
+        const config = await response.json();
+        console.log('AAD 配置:', config);
+
+        const { clientId, authority, redirectUri } = config;
+
+        // 創建 MSAL 實例
+        console.log('正在創建 MSAL 實例...');
+        const msalApp = new PublicClientApplication({
+          auth: {
+            clientId,
+            authority,
+            redirectUri
+          }
+        });
+
+        await msalApp.initialize();
+        console.log('MSAL 實例已初始化');
+
+        // 進入網頁時自動啟動 MSAL 登入
+        console.log('正在啟動登入彈窗...');
+        try {
+          const loginResponse = await msalApp.loginPopup({
+            scopes: ["User.Read", "openid", "profile", "email"]
+          });
+          console.log('登入成功:', loginResponse);
+          const account = loginResponse.account;
+
+          setCurrentUser({
+            username: account.username || account.name,
+            name: account.name,
+            email: account.username,
+            account: account
+          });
+          setIsAuthenticated(true);
+
+        } catch (loginError) {
+          console.error("登入失敗:", loginError);
+          setAuthError(`登入失敗: ${loginError.message}`);
+          setIsAuthenticated(false);
+        }
+
+      } catch (configError) {
+        console.error('無法獲取 AAD 配置:', configError);
+        setAuthError(`無法獲取 AAD 配置: ${configError.message}`);
+      }
+    };
+
+    initializeMsal();
+  }, []);
 
   // 模擬實時數據更新
   useEffect(() => {
@@ -279,7 +357,7 @@ const App = () => {
           }
         }));
       });
-    }, 3000);
+    }, 300000);
 
     return () => clearInterval(interval);
   }, []);
@@ -295,15 +373,25 @@ const App = () => {
 
   // 錯誤顯示組件
   const ErrorMessage = () => {
-    if (!error) return null;
-
     return (
-      <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
-        <div className="flex items-center space-x-2">
-          <AlertTriangle className="w-4 h-4" />
-          <span className="text-sm font-medium">Internet Error: {error}</span>
-        </div>
-      </div>
+      <>
+        {error && (
+          <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-sm font-medium">Internet Error: {error}</span>
+            </div>
+          </div>
+        )}
+        {authError && (
+          <div className="fixed top-16 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg shadow-lg z-50">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="text-sm font-medium">認證錯誤: {authError}</span>
+            </div>
+          </div>
+        )}
+      </>
     );
   };
 
@@ -474,8 +562,17 @@ const App = () => {
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <div className="hidden md:block">
-                    <p className="text-sm font-semibold text-gray-900">Energy Manager</p>
-                    <p className="text-xs text-gray-500">Administrator</p>
+                    {isAuthenticated && currentUser ? (
+                      <>
+                        <p className="text-sm font-semibold text-gray-900">{currentUser.name || currentUser.username}</p>
+                        <p className="text-xs text-gray-500">已驗證</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-gray-900">Energy Manager</p>
+                        <p className="text-xs text-gray-500">未驗證</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

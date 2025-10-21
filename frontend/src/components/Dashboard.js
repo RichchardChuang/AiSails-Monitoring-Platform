@@ -4,7 +4,8 @@ import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, Trendin
 const Dashboard = ({ realTimeData }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const dieselData = realTimeData.diesel;
+  
   useEffect(() => {
     updateWeatherInfo();
     const weatherInterval = setInterval(updateWeatherInfo, 60000); // 每1分鐘更新一次
@@ -18,9 +19,17 @@ const Dashboard = ({ realTimeData }) => {
     try {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+        // const lat = position.coords.latitude;
+        const lat = 24.0983;
+
+        console.log('緯度:', lat);
+        // const lon = position.coords.longitude;
+        const lon = 120.3930;
+
+        console.log('經度:', lon);
+        // const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${24.0983}&lon=${120.3930}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+
         const data = await response.json();
         
         // 風向中文轉換
@@ -32,14 +41,14 @@ const Dashboard = ({ realTimeData }) => {
 
         setWeatherData({
           location: data.name || '未知地點',
-          description: data.weather[0].description,
-          temperature: data.main.temp,
-          windSpeed: data.wind.speed,
-          windDeg: data.wind.deg,
+          description: data.weather?.[0]?.description || '未知天氣',
+          temperature: data.main?.temp || 0,
+          windSpeed: data.wind?.speed || 0,
+          windDeg: data.wind?.deg || 0,
           windDir: windDir,
-          icon: data.weather[0].icon,
-          humidity: data.main.humidity,
-          pressure: data.main.pressure
+          icon: data.weather?.[0]?.icon || '01d',
+          humidity: data.main?.humidity || 0,
+          pressure: data.main?.pressure || 0
         });
         setLoading(false);
       }, (error) => {
@@ -62,7 +71,7 @@ const Dashboard = ({ realTimeData }) => {
         <div>
           <p className="text-sm text-gray-500 font-medium">{title}</p>
           <div className="flex items-baseline mt-2">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-4xl font-bold text-gray-900">
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
             <span className="text-sm text-gray-500 ml-1">{unit}</span>
@@ -112,7 +121,7 @@ const Dashboard = ({ realTimeData }) => {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-2xl font-bold text-gray-900">{categories[0].percentage}%</span>
+              <span className="text-4xl font-bold text-gray-900">{categories[0].percentage}%</span>
               <span className="text-sm text-gray-500">Active</span>
             </div>
           </div>
@@ -227,7 +236,7 @@ const Dashboard = ({ realTimeData }) => {
       <div className="relative z-10">
         <div className="mb-8">
           <p className="text-sm opacity-80">Total System Power</p>
-          <p className="text-3xl font-bold">
+          <p className="text-4xl font-bold">
             {((realTimeData.skysails?.windSpeed || 0) * 100 + (realTimeData.ess?.pcs?.activePower || 0)).toFixed(0)} kW
           </p>
         </div>
@@ -291,7 +300,7 @@ const Dashboard = ({ realTimeData }) => {
 
           <div className="mb-4">
             <div className="flex items-baseline">
-              <span className="text-3xl font-bold">{weatherData.temperature.toFixed(1)}</span>
+              <span className="text-4xl font-bold">{weatherData.temperature.toFixed(1)}</span>
               <span className="text-lg ml-1">°C</span>
             </div>
             <p className="text-blue-100 text-sm capitalize">{weatherData.description}</p>
@@ -365,7 +374,7 @@ const Dashboard = ({ realTimeData }) => {
 
         <MetricCard
           title="Diesel Status"
-          value="Standby"
+          value= {dieselData.status.engineSwitch === false ? '停止' : '運行'}
           unit=""
           change="0"
           trend="up"
@@ -396,7 +405,7 @@ const Dashboard = ({ realTimeData }) => {
             </div>
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 text-white">
               <p className="text-sm opacity-90">Overall Efficiency</p>
-              <p className="text-2xl font-bold">94.2%</p>
+              <p className="text-4xl font-bold">94.2%</p>
               <p className="text-xs opacity-80 mt-2">Above industry average</p>
             </div>
           </div>

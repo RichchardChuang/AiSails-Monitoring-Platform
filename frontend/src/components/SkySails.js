@@ -33,7 +33,7 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
       <div className="flex items-end justify-between">
         <div>
           <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-4xl font-bold text-gray-900">
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
             <span className="text-sm text-gray-500">{unit}</span>
