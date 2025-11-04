@@ -395,7 +395,7 @@ const Dashboard = ({ realTimeData }) => {
           <EnergyCard />
           
           {/* 效能指標 */}
-          <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+          {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">System Performance</h3>
               <div className="flex items-center space-x-2">
@@ -408,7 +408,7 @@ const Dashboard = ({ realTimeData }) => {
               <p className="text-4xl font-bold">94.2%</p>
               <p className="text-xs opacity-80 mt-2">Above industry average</p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* 右側 - 天氣狀況 */}

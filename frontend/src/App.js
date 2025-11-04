@@ -26,82 +26,82 @@ const App = () => {
   const [currentSite, setCurrentSite] = useState('Site 彰濱');
   const [realTimeData, setRealTimeData] = useState({
     skysails: {
-      windSpeed: 0,
-      tension: 0,
-      status: 'standby'
+      windSpeed: 0,  // pn14.wind
+      tension: 0,  // pn14.force
+      status: 'standby'  // pn14.status
     },
     ess: {
-      switch: false,
-      status: 'inactive',
-      voltage: 0,
-      current: 0,
+      switch: false,  // sbms.active
+      status: 'inactive',  // sbms.active
+      voltage: 0,  // sbms.voltage
+      current: 0,  // sbms.current
       rack1: {
-        temperature:0
+        temperature: 0  // sbms.rack1.temperature
       },
       rack2: {
-        temperature:0
+        temperature: 0  // sbms.rack2.temperature
       },
       rack3: {
-        temperature:0
+        temperature: 0  // sbms.rack3.temperature
       },
       rack4: {
-        temperature:0
+        temperature: 0  // sbms.rack4.temperature
       },
       ups: {
-        load: 0,
-        status: 'normal'
+        load: 0,  // sbms.soc
+        status: 'normal'  // sbms.connected
       },
       aircon: {
-        status: 'Running',
-        temperature: 3,
-        humidity: 50,
-        mode: 'Cooling'
+        status: 'Running',  // 假數據
+        temperature: 3,  // 假數據
+        humidity: 50,  // 假數據
+        mode: 'Cooling'  // 假數據
       },
       pcs: {
-        frequency: 0,
-        voltage: 0,
-        current: 0,
-        status: 'normal',
-        activePower: 0,
-        reactivePower: 0,
-        load: 0,
-        connectionStatus: 'Off',
-        operatingMode: '微電網',
-        pcsStatus: 'standby',
-        gridStatus: 'Grid Disconnected',
-        supplyFrequency: 0,
-        dcVoltage: 0,
-        fault: '正常',
-        lineVoltage: 0,
-        lineFrequency: 0
+        frequency: 0,  // pcs.frequency
+        voltage: 0,  // pcs.linevoltage
+        current: 0,  // pcs.current
+        status: 'normal',  // pcs.connected
+        activePower: 0,  // pcs.power
+        reactivePower: 0,  // 無後端數據
+        load: 0,  // 計算自 pcs.power
+        connectionStatus: 'Off',  // pcs.connected
+        operatingMode: '微電網',  // pcs.operationmode
+        pcsStatus: 'standby',  // pcs.pcsstatus
+        gridStatus: 'Grid Disconnected',  // pcs.gridstatus
+        supplyFrequency: 0,  // pcs.supplyfrequency
+        dcVoltage: 0,  // pcs.dcvoltage
+        fault: '正常',  // pcs.fault
+        lineVoltage: 0,  // pcs.linevoltage
+        lineFrequency: 0  // pcs.linefrequency
       }
     },
     diesel: {
-      engineSwitch: false,
+      engineSwitch: false,  // diesel.status (includes 'Started')
       status: {
-        mode: 0,
-        acb:0,
-        frequency: 0,
-        oilPressure: 0,
-        coolantTemp: 0,
-        fuel: 0
+        mode: 0,  // diesel.status (includes 'Auto') ? 0 : 1
+        acb: 0,  // diesel.status (includes 'OFF') ? 0 : 1
+        frequency: 0,  // diesel.frequency
+        oilPressure: 0,  // diesel.oilpressure
+        coolantTemp: 0,  // diesel.coolertemperature
+        fuel: 0  // diesel.fuel
       },
       power: {
-        l1Power: 0,
-        l2Power: 0,
-        l3Power: 0,
-        l1Voltage: 0,
-        l2Voltage: 0,
-        l3Voltage: 0,
-        l1Current: 0,
-        l2Current: 0,
-        l3Current: 0
+        l1Power: 0,  // diesel.l1power
+        l2Power: 0,  // diesel.l2power
+        l3Power: 0,  // diesel.l3power
+        l1Voltage: 0,  // diesel.l1l2voltage
+        l2Voltage: 0,  // diesel.l2l3voltage
+        l3Voltage: 0,  // diesel.l3l1voltage
+        l1Current: 0,  // diesel.l1current
+        l2Current: 0,  // diesel.l2current
+        l3Current: 0  // diesel.l3current
       },
       other: {
-        batteryVoltage: 0,
-        fieldVoltage: 0,
-        temperature: 0,
-        power: 0
+        batteryVoltage: 0,  // diesel.batteryvoltage
+        fieldVoltage: 0,  // diesel.chargemagneticvoltage
+        temperature: 0,  // diesel.temperature
+        power: 0  // diesel.power
       }
     }
   });
@@ -584,11 +584,11 @@ const App = () => {
             className="flex-1 p-4 lg:p-8"
             style={{
               backgroundImage: `url('/images/skysails-bg.jpg')`,
-              backgroundSize: '55%',
+              backgroundSize: 'auto 1500px',
               backgroundRepeat: 'repeat-x',
               backgroundPosition: 'center',
               backgroundAttachment: 'fixed',
-              minHeight: 'calc(100vh - 70px)',
+              // minHeight: 'calc(100vh - 70px)',
               overflowY: 'auto',
               scrollbarWidth: 'thin',
               scrollbarColor: 'rgba(79, 70, 229, 0.3) transparent'

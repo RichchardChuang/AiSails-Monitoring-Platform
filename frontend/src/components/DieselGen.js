@@ -127,7 +127,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           ) : (
             <div className="flex items-baseline space-x-1">
               <span className="text-4xl font-bold text-gray-900">
-                {typeof value === 'number' ? (category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)) : value}
+                {typeof value === 'number' ? ((category === 'pcs' || category === 'diesel') && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)) : value}
               </span>
               <span className="text-sm text-gray-500">{unit}</span>
             </div>
@@ -146,6 +146,8 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           unit="Hz"
           icon={Gauge}
           status="standby"
+          category="diesel"
+          field="frequency"
         />
         <MetricCard
           title="油壓"
@@ -153,6 +155,8 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           unit="bar"
           icon={Fuel}
           status="normal"
+          category="diesel"
+          field="oilPressure"
         />
         <MetricCard
           title="冷卻溫度"
@@ -160,13 +164,18 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           unit="°C"
           icon={Thermometer}
           status="normal"
+          category="diesel"
+          field="coolantTemp"
         />
+        {/* no sensor */}
         <MetricCard
-          title="燃料"
+          title="燃料(no sensor)"
           value={dieselData.status.fuel}
           unit=""
           icon={Fuel}
           status="ready"
+          category="diesel"
+          field="fuel"
         />
       </div>
 
@@ -191,16 +200,16 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
                 {dieselData.status.ACB === 0 ? 'OFF' : 'ON'}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            {/* <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">運行時間</span>
               <span className="font-medium">0 小時</span>
-            </div>
+            </div> */}
           </div>
           
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900 mb-3">機械參數</h4>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">引擎轉速</span>
+              <span className="text-gray-700">引擎轉速 *先留著</span>
               <span className="font-medium">0 RPM</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
@@ -211,13 +220,13 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
               <span className="text-gray-700">冷卻水溫</span>
               <span className="font-medium">{dieselData.status.coolantTemp}°C</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            {/* <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">排氣溫度</span>
               <span className="font-medium">25°C</span>
-            </div>
+            </div> */}
           </div>
           
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <h4 className="font-medium text-gray-900 mb-3">燃料系統</h4>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">主油箱</span>
@@ -235,7 +244,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
               <span className="text-gray-700">預計可運行</span>
               <span className="font-medium">48 小時</span>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
@@ -260,10 +269,10 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
             L1 相
           </h3>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <span className="text-gray-600">功率</span>
               <span className="font-bold text-2xl">{dieselData.power.l1Power} kW</span>
-            </div>
+            </div> */}
             <div className="flex justify-between items-center">
               <span className="text-gray-600">電壓</span>
               <span className="font-medium">{dieselData.power.l1Voltage} V</span>
@@ -281,10 +290,10 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
             L2 相
           </h3>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <span className="text-gray-600">功率</span>
               <span className="font-bold text-2xl">{dieselData.power.l2Power} kW</span>
-            </div>
+            </div> */}
             <div className="flex justify-between items-center">
               <span className="text-gray-600">電壓</span>
               <span className="font-medium">{dieselData.power.l2Voltage} V</span>
@@ -302,10 +311,10 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
             L3 相
           </h3>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
+            {/* <div className="flex justify-between items-center">
               <span className="text-gray-600">功率</span>
               <span className="font-bold text-2xl">{dieselData.power.l3Power} kW</span>
-            </div>
+            </div> */}
             <div className="flex justify-between items-center">
               <span className="text-gray-600">電壓</span>
               <span className="font-medium">{dieselData.power.l3Voltage} V</span>
@@ -324,7 +333,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <span className="text-gray-700">總有效功率</span>
-              <span className="font-bold text-2xl text-orange-600">
+              <span className="font-bold text-2xl text-green-600">
                 {(dieselData.power.l1Power + dieselData.power.l2Power + dieselData.power.l3Power)} kW
               </span>
             </div>
@@ -340,14 +349,14 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
                 {((dieselData.power.l1Current + dieselData.power.l2Current + dieselData.power.l3Current) / 3).toFixed(1)} A
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            {/* <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">功率因數</span>
               <span className="font-medium">0.85</span>
-            </div>
+            </div> */}
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">負載平衡監控</h3>
           <div className="space-y-4">
             {['L1', 'L2', 'L3'].map((phase, index) => {
@@ -376,7 +385,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute }) => {
             <p className="text-sm text-blue-800 font-medium">負載平衡狀況: 良好</p>
             <p className="text-xs text-blue-600">各相負載差異小於5%</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
