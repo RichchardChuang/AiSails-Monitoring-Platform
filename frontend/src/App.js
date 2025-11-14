@@ -32,7 +32,9 @@ const App = () => {
     },
     ess: {
       switch: false,  // sbms.active
-      status: 'inactive',  // sbms.active
+      status: 'status',  // sbms.active   it seem like status is derived from active
+      chargeStatus: 'status',  // sbms.active Charge discharge state  it seem like status is derived from active
+
       voltage: 0,  // sbms.voltage
       current: 0,  // sbms.current
       rack1: {
@@ -176,7 +178,8 @@ const App = () => {
           ess: {
             // ESS Battery 外層控制
             switch: data.devices.sbms?.active || false,
-            status: data.devices.sbms?.active ? 'active' : 'inactive',
+            status: data.devices.sbms?.active || "N/A",
+            chargeStatus: data.devices.sbms?.status || "N/A",
             voltage: data.devices.sbms?.voltage || 0,
             current: data.devices.sbms?.current || 0,
             rack1: {
@@ -228,7 +231,7 @@ const App = () => {
             }
           },
           diesel: {
-            engineSwitch: data.devices.diesel?.status?.includes('Started') || false,
+            engineSwitch: data.devices.diesel?.started || false,
             status: {
               mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
               acb: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,

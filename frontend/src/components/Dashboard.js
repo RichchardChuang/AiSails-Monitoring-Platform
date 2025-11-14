@@ -4,8 +4,9 @@ import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, Trendin
 const Dashboard = ({ realTimeData }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const dieselData = realTimeData.diesel;
-  
+
   useEffect(() => {
     updateWeatherInfo();
     const weatherInterval = setInterval(updateWeatherInfo, 60000); // 每1分鐘更新一次
@@ -17,49 +18,64 @@ const Dashboard = ({ realTimeData }) => {
 
   const updateWeatherInfo = async () => {
     try {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        // const lat = position.coords.latitude;
-        const lat = 24.0983;
+      // 只在第一次載入時顯示 loading
+      if (isFirstLoad) {
+        setLoading(true);
+      }
+      // *****auto detect location*****
+      // navigator.geolocation.getCurrentPosition(async (position) => {
+      //         // const lat = position.coords.latitude;
+      //         const lat = 24.0983;
 
-        console.log('緯度:', lat);
-        // const lon = position.coords.longitude;
-        const lon = 120.3930;
+      //         console.log('緯度:', lat);
+      //         // const lon = position.coords.longitude;
+      //         const lon = 120.3930;
 
-        console.log('經度:', lon);
-        // const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
-        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${24.0983}&lon=${120.3930}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+      //         console.log('經度:', lon);
+      //         // const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+      //         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${24.0983}&lon=${120.3930}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
 
-        const data = await response.json();
-        
-        // 風向中文轉換
-        let windDir = '--';
-        if (typeof data.wind?.deg === 'number') {
-          const dirs = ['北', '北北東', '東北', '東北東', '東', '東南東', '東南', '南南東', '南', '南南西', '西南', '西南西', '西', '西北西', '西北', '北北西', '北'];
-          windDir = dirs[Math.round(data.wind.deg / 22.5) % 16];
-        }
+      // 直接使用固定經緯度，避免不同環境下的地理位置權限問題
+      const lat = 24.0983;
+      const lon = 120.3930;
 
-        setWeatherData({
-          location: data.name || '未知地點',
-          description: data.weather?.[0]?.description || '未知天氣',
-          temperature: data.main?.temp || 0,
-          windSpeed: data.wind?.speed || 0,
-          windDeg: data.wind?.deg || 0,
-          windDir: windDir,
-          icon: data.weather?.[0]?.icon || '01d',
-          humidity: data.main?.humidity || 0,
-          pressure: data.main?.pressure || 0
-        });
-        setLoading(false);
-      }, (error) => {
-        console.error('地理位置錯誤:', error);
-        setWeatherData(null);
-        setLoading(false);
+      console.log('緯度:', lat);
+      console.log('經度:', lon);
+
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=4387509096865c786643f2bcd88e4160&lang=zh_tw&units=metric`);
+
+      const data = await response.json();
+
+      // 風向中文轉換
+      let windDir = '--';
+      if (typeof data.wind?.deg === 'number') {
+        const dirs = ['北', '北北東', '東北', '東北東', '東', '東南東', '東南', '南南東', '南', '南南西', '西南', '西南西', '西', '西北西', '西北', '北北西', '北'];
+        windDir = dirs[Math.round(data.wind.deg / 22.5) % 16];
+      }
+
+      setWeatherData({
+        location: data.name || '未知地點',
+        description: data.weather?.[0]?.description || '未知天氣',
+        temperature: data.main?.temp || 0,
+        windSpeed: data.wind?.speed || 0,
+        windDeg: data.wind?.deg || 0,
+        windDir: windDir,
+        icon: data.weather?.[0]?.icon || '01d',
+        humidity: data.main?.humidity || 0,
+        pressure: data.main?.pressure || 0
       });
+
+      if (isFirstLoad) {
+        setLoading(false);
+        setIsFirstLoad(false);
+      }
     } catch (error) {
       console.error('天氣載入失敗:', error);
-      setWeatherData(null);
-      setLoading(false);
+      // 只在第一次載入時設置為 null，之後保留舊資料
+      if (isFirstLoad) {
+        setWeatherData(null);
+        setLoading(false);
+      }
     }
   };
   const MetricCard = ({ title, value, unit, change, trend, className = "", children, onClick }) => (
@@ -91,7 +107,7 @@ const Dashboard = ({ realTimeData }) => {
 
   const CategorySpendingChart = () => {
     const categories = [
-      { name: 'SkySails', value: (realTimeData.skysails?.windSpeed || 0) * 100, color: 'bg-blue-500', percentage: 40 },
+      { name: 'SkySails WindSpeed', value: (realTimeData.skysails?.windSpeed || 0), color: 'bg-blue-500', percentage: 40 },
       { name: 'ESS Battery', value: realTimeData.ess?.voltage || 0, color: 'bg-green-500', percentage: 35 },
       { name: 'PCS System', value: realTimeData.ess?.pcs?.activePower || 0, color: 'bg-purple-500', percentage: 20 },
       { name: 'Diesel Gen', value: 0, color: 'bg-orange-500', percentage: 5 }
@@ -134,7 +150,7 @@ const Dashboard = ({ realTimeData }) => {
                 <span className="text-sm font-medium text-gray-700">{category.name}</span>
               </div>
               <span className="text-sm font-bold text-gray-900">
-                {(category.value || 0).toFixed(1)} {category.name === 'SkySails' ? 'kW' : category.name === 'ESS Battery' ? 'V' : 'kW'}
+                {(category.value || 0).toFixed(1)} {category.name === 'SkySails WindSpeed' ? 'm/s' : category.name === 'ESS Battery' ? 'V' : 'kW'}
               </span>
             </div>
           ))}
@@ -338,35 +354,93 @@ const Dashboard = ({ realTimeData }) => {
     );
   };
 
+  // 系統連線狀態卡片
+  const SystemStatusCard = () => {
+    // 判斷各系統是否連線（根據資料是否存在且有效）
+    const essOnline = realTimeData.ess?.voltage > 0;
+    const pcsOnline = realTimeData.ess?.pcs?.frequency > 0;
+    const dgOnline = realTimeData.diesel?.status?.engineSwitch !== undefined;
+    const pn14Online = realTimeData.skysails?.windSpeed !== undefined && realTimeData.skysails?.windSpeed !== null;
+
+    const totalSystems = 4;
+    const onlineSystems = [essOnline, pcsOnline, dgOnline, pn14Online].filter(Boolean).length;
+
+    const systems = [
+      { name: 'ESS', online: essOnline, color: 'bg-green-500' },
+      { name: 'PCS', online: pcsOnline, color: 'bg-blue-500' },
+      { name: 'DG', online: dgOnline, color: 'bg-orange-500' },
+      { name: 'PN14', online: pn14Online, color: 'bg-purple-500' }
+    ];
+
+    return (
+      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+        <div className="mb-4">
+          <p className="text-sm text-gray-500 font-medium">系統連線</p>
+          <div className="flex items-baseline mt-2">
+            <span className="text-4xl font-bold text-gray-900">{onlineSystems}</span>
+            <span className="text-2xl text-gray-400 mx-1">/</span>
+            <span className="text-2xl text-gray-400">{totalSystems}</span>
+          </div>
+          {/* <p className="text-xs text-gray-400 mt-1">部分離線</p> */}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {systems.map((system, index) => (
+            <div
+              key={index}
+              className={`px-3 py-2 rounded-lg border-2 transition-all ${
+                system.online
+                  ? 'bg-green-50 border-green-500 text-green-700'
+                  : 'bg-red-50 border-red-500 text-red-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">{system.name}</span>
+                <div className={`w-2 h-2 rounded-full ${
+                  system.online ? 'bg-green-500' : 'bg-red-500'
+                } animate-pulse`}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8">
       {/* 頂部指標卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="SkySails Power"
-          value={(realTimeData.skysails?.windSpeed || 0) * 100}
-          unit="kW"
-          change="5.2"
-          trend="up"
-        >
-          <Wind className="w-8 h-8 text-green-600" />
-        </MetricCard>
+        <SystemStatusCard />
+
+        {/* ESS Battery 狀態卡片 */}
+        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+          <div className="mb-4">
+            <p className="text-sm text-gray-500 font-medium">ESS</p>
+            <div className="flex items-baseline mt-2">
+              <span className="text-4xl font-bold text-gray-900">
+                {(realTimeData.ess?.ups?.load || 0).toFixed(1)}
+              </span>
+              <span className="text-xl text-gray-500 ml-1">%</span>
+            </div>
+            <p className="text-sm text-blue-600 font-medium mt-2">
+              {realTimeData.ess?.pcs?.activePower > 0
+                ? 'Active: Discharging'
+                : realTimeData.ess?.pcs?.activePower < 0
+                ? 'Active: Charging'
+                : 'Active: Standby'}
+            </p>
+          </div>
+          <div className="flex items-center justify-end">
+            <Battery className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
 
         <MetricCard
-          title="ESS Voltage"
-          value={realTimeData.ess?.voltage || 0}
-          unit="V"
-          change="2.1"
-          trend="up"
-        >
-          <Battery className="w-8 h-8 text-green-500" />
-        </MetricCard>
-
-        <MetricCard
-          title="PCS Power"
-          value={realTimeData.ess?.pcs?.activePower || 0}
-          unit="kW"
-          change="1.8"
+          title="PCS Frequency"
+          value={(realTimeData.ess.pcs.frequency || 0).toFixed(2)}
+          unit="Hz"
+          // change="1.8"
           trend="up"
         >
           <Zap className="w-8 h-8 text-purple-500" />
@@ -376,7 +450,7 @@ const Dashboard = ({ realTimeData }) => {
           title="Diesel Status"
           value= {dieselData.status.engineSwitch === false ? '停止' : '運行'}
           unit=""
-          change="0"
+          // change="0"
           trend="up"
         >
           <Fuel className="w-8 h-8 text-orange-500" />

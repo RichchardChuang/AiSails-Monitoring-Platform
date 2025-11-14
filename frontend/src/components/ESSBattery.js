@@ -346,7 +346,7 @@ const toggleEdit = async (key) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">UPS狀態</span>
-              <span className="font-medium text-green-600">Normal</span>
+              <span className="font-medium text-green-600">{essData.status}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">輸入電壓</span>
@@ -358,7 +358,7 @@ const toggleEdit = async (key) => {
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.ups?.load || 90}%</span>
+              <span className="font-medium">{essData.ups?.load || NaN}%</span>
             </div>
           </div>
           <div className="space-y-4">
@@ -747,23 +747,29 @@ const toggleEdit = async (key) => {
         </div>
         
         {/* 充電電壓 充電電流並排 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <MetricCard
-            title="狀態"
-            value={essData.status || (essData.switch || essData.ups?.switch ? 'Active' : 'Inactive')}
+            title="系統狀態"
+            value={essData.status}
             icon={Activity}
             status={essData.status === 'active' || (essData.switch || essData.ups?.switch) ? 'activate' : 'inactive'}
           />
           <MetricCard
+            title="充放電狀態"
+            value={essData.chargeStatus}
+            icon={Activity}
+            status={essData.chargeStatus}
+          />
+          <MetricCard
             title="充電電壓"
-            value={essData.voltage || essData.ups?.voltage}
+            value={essData.voltage}
             unit="V"
             icon={Zap}
             status="normal"
           />
           <MetricCard
             title="充電電流"
-            value={essData.current || essData.ups?.current}
+            value={essData.current}
             unit="A"
             icon={Battery}
             status="normal"
