@@ -324,7 +324,7 @@ const toggleEdit = async (key) => {
             </div>
           ) : (
             <div className="flex items-baseline space-x-1">
-              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ? 'text-2xl xl:text-3xl' : 'text-2xl xl:text-3xl'}`}>
+              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ? 'text-xl xl:text-2xl' : 'text-xl xl:text-2xl'}`}>
                 {typeof value === 'number' ?(category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)): value}
               </span>
               <span className="text-sm text-gray-500">{unit}</span>
@@ -582,11 +582,11 @@ const toggleEdit = async (key) => {
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">供應頻率</span>
-              <span className="font-medium">{essData.pcs.supplyFrequency} Hz</span>
+              <span className="font-medium">{essData.pcs.supplyFrequency.toFixed(2)} Hz</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.pcs.load}%</span>
+              <span className="font-medium">{essData.pcs.load.toFixed(1)}%</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">故障狀態</span>
@@ -994,12 +994,22 @@ const toggleEdit = async (key) => {
 
                   {/* 負載資訊 */}
                   <div className="text-center -mt-2">
-                    <div className="text-3xl font-bold text-gray-900">{(essData.ups?.load || 0).toFixed(0)}%</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {(essData.ups?.load || 0) < 20 ? '異常 0%-20%' :
-                       (essData.ups?.load || 0) < 50 ? '目標 20%-50%' :
-                       (essData.ups?.load || 0) <= 90 ? 'NORMAL' :
-                       '異常 90%-100%'}
+                    <div className={`text-xl font-bold ${
+                      (essData.ups?.load || 0) < 20 ? 'text-red-600' :
+                      (essData.ups?.load || 0) < 50 ? 'text-orange-300' :
+                      (essData.ups?.load || 0) <= 90 ? 'text-green-600' :
+                      'text-red-600'
+                    }`}>{(essData.ups?.load || 0).toFixed(0)}%</div>
+                    <div className={`text-sm font-medium mt-1 ${
+                      (essData.ups?.load || 0) < 20 ? 'text-red-600' :
+                      (essData.ups?.load || 0) < 50 ? 'text-orange-300' :
+                      (essData.ups?.load || 0) <= 90 ? 'text-green-600' :
+                      'text-red-600'
+                    }`}>
+                      {(essData.ups?.load || 0) < 20 ? 'Risk' :
+                       (essData.ups?.load || 0) < 50 ? 'Low' :
+                       (essData.ups?.load || 0) <= 90 ? 'Normal' :
+                       'Risk'}
                     </div>
                   </div>
                 </div>
@@ -1041,6 +1051,120 @@ const toggleEdit = async (key) => {
         {/* 右側 - PCS 頻率控制 */}
         <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">PCS 頻率控制</h3>
+
+          {/* PCS 頻率儀表板 - 置中顯示 */}
+          <div className="flex flex-col items-center justify-center mb-6">
+            <div className="relative w-52 h-32">
+              <svg className="w-full h-full" viewBox="0 0 220 120">
+                {/* 彩色區域 - 橙色 (59.77-59.90) */}
+                <path
+                  d="M 30 100 A 80 80 0 0 1 62 40"
+                  fill="none"
+                  stroke="#f59e0b"
+                  strokeWidth="8"
+                  strokeLinecap="butt"
+                />
+                {/* 左端圓弧 */}
+                <circle cx="30" cy="100" r="4" fill="#f59e0b" />
+                {/* 彩色區域 - 綠色 (59.90-60.00) */}
+                <path
+                  d="M 62 40 A 80 80 0 0 1 120 24"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="8"
+                  strokeLinecap="butt"
+                />
+                {/* 彩色區域 - 紅色 (60.00-60.23) */}
+                <path
+                  d="M 120 24 A 80 80 0 0 1 190 100"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="8"
+                  strokeLinecap="butt"
+                />
+                {/* 右端圓弧 */}
+                <circle cx="190" cy="100" r="4" fill="#ef4444" />
+
+                {/* 刻度線 */}
+                {Array.from({ length: 47 }, (_, i) => 59.77 + i * 0.01).map((tick) => {
+                  const percentage = ((tick - 59.77) / (60.23 - 59.77)) * 100;
+                  const angle = 180 - percentage * 1.8;
+                  const radian = (angle * Math.PI) / 180;
+                  const x1 = 110 + 76 * Math.cos(radian);
+                  const y1 = 100 - 76 * Math.sin(radian);
+                  const isMainTick = Math.abs(tick - Math.round(tick * 20) / 20) < 0.001;
+                  const x2 = 110 + (isMainTick ? 66 : 72) * Math.cos(radian);
+                  const y2 = 100 - (isMainTick ? 66 : 72) * Math.sin(radian);
+                  return (
+                    <line
+                      key={tick.toFixed(2)}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="#94a3b8"
+                      strokeWidth={isMainTick ? "2" : "0.5"}
+                    />
+                  );
+                })}
+
+                {/* 刻度數字 */}
+                {[59.77, 59.85, 59.95, 60.05, 60.15, 60.23].map((tick) => {
+                  const percentage = ((tick - 59.77) / (60.23 - 59.77)) * 100;
+                  const angle = 180 - percentage * 1.8;
+                  const radian = (angle * Math.PI) / 180;
+                  const x = 110 + 56 * Math.cos(radian);
+                  const y = 100 - 56 * Math.sin(radian);
+                  return (
+                    <text
+                      key={tick}
+                      x={x}
+                      y={y + 4}
+                      textAnchor="middle"
+                      fontSize="8"
+                      fill="#64748b"
+                      fontWeight="500"
+                    >
+                      {tick.toFixed(2)}
+                    </text>
+                  );
+                })}
+
+                {/* 指針 */}
+                <line
+                  x1="110"
+                  y1="100"
+                  x2={110 + 65 * Math.cos((180 - ((essData.pcs.frequency - 59.77) / (60.23 - 59.77)) * 100 * 1.8) * Math.PI / 180)}
+                  y2={100 - 65 * Math.sin((180 - ((essData.pcs.frequency - 59.77) / (60.23 - 59.77)) * 100 * 1.8) * Math.PI / 180)}
+                  stroke="#1e293b"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+                <circle cx="110" cy="100" r="4" fill="#1e293b" />
+              </svg>
+            </div>
+
+            {/* 頻率資訊 */}
+            <div className="text-center -mt-2">
+              <div className={`text-3xl font-bold ${
+                essData.pcs.frequency < 59.77 ? 'text-red-600' :
+                essData.pcs.frequency < 59.90 ? 'text-orange-600' :
+                essData.pcs.frequency <= 60.00 ? 'text-green-600' :
+                'text-red-600'
+              }`}>{essData.pcs.frequency.toFixed(2)} Hz</div>
+              <div className={`text-xs font-medium mt-1 ${
+                essData.pcs.frequency < 59.77 ? 'text-red-600' :
+                essData.pcs.frequency < 59.90 ? 'text-orange-600' :
+                essData.pcs.frequency <= 60.00 ? 'text-green-600' :
+                'text-red-600'
+              }`}>
+                {essData.pcs.frequency < 59.77 ? 'Risk' :
+                 essData.pcs.frequency < 59.90 ? 'Low' :
+                 essData.pcs.frequency <= 60.00 ? 'Normal' :
+                 'Risk'}
+              </div>
+            </div>
+          </div>
 
           {/* Admin 權限提示 */}
           {isAdmin && (

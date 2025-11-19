@@ -81,6 +81,7 @@ const App = () => {
     diesel: {
       engineSwitch: false,  // diesel.status (includes 'Started')
       status: {
+        started: false,
         mode: 0,  // diesel.status (includes 'Auto') ? 0 : 1
         acb: 0,  // diesel.status (includes 'OFF') ? 0 : 1
         frequency: 0,  // diesel.frequency
@@ -105,7 +106,11 @@ const App = () => {
         temperature: 0,  // diesel.temperature
         power: 0  // diesel.power
       }
-    }
+    },
+    pn14:{
+      connected: false,
+      details: {},
+    },
   });
 
   // 自動清除認證錯誤 (10秒後)
@@ -233,6 +238,7 @@ const App = () => {
           diesel: {
             engineSwitch: data.devices.diesel?.started || false,
             status: {
+              started: data.devices.diesel?.started || false,
               mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
               acb: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
               frequency: data.devices.diesel?.frequency || 0,
@@ -257,7 +263,11 @@ const App = () => {
               temperature: data.devices.diesel?.temperature || 0,
               power: data.devices.diesel?.power || 0
             }
-          }
+          },
+          pn14: {
+            connected: data.devices.pn14?.connected !== false,
+            details: data.devices.pn14 || {},
+          },
         }));
       }
     } catch (err) {
@@ -459,7 +469,7 @@ const App = () => {
 
       <div className="flex h-screen">
         {/* 側邊欄 - 固定高度，獨立滾動 */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-950 to-indigo-700 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
+        <div className={`fixed inset-y-0 left-0 z-50 w-56 bg-gradient-to-b from-slate-950 to-indigo-700 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
           {/* 頂部標題區域 - 固定不滾動 */}
           <div className="flex items-center justify-between p-6 border-b border-indigo-700 flex-shrink-0">
             <div className="flex items-center space-x-3">

@@ -78,15 +78,15 @@ const Dashboard = ({ realTimeData }) => {
       }
     }
   };
-  const MetricCard = ({ title, value, unit, change, trend, className = "", children, onClick }) => (
+  const MetricCard = ({ title, value, unit, change, trend, className = "", children,content = "", onClick }) => (
     <div 
       className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-sm text-gray-500 font-medium">{title}</p>
-          <div className="flex items-baseline mt-2">
+          <div className="flex items-baseline mt-4">
             <span className="text-4xl font-bold text-gray-900">
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
@@ -102,6 +102,7 @@ const Dashboard = ({ realTimeData }) => {
         </div>
         {children}
       </div>
+      <div className="text-sm text-gray-500 font-medium">{content}</div>
     </div>
   );
 
@@ -359,8 +360,8 @@ const Dashboard = ({ realTimeData }) => {
     // 判斷各系統是否連線（根據資料是否存在且有效）
     const essOnline = realTimeData.ess?.voltage > 0;
     const pcsOnline = realTimeData.ess?.pcs?.frequency > 0;
-    const dgOnline = realTimeData.diesel?.status?.engineSwitch !== undefined;
-    const pn14Online = realTimeData.skysails?.windSpeed !== undefined && realTimeData.skysails?.windSpeed !== null;
+    const dgOnline = realTimeData.diesel?.status?.started || false;
+    const pn14Online = realTimeData.pn14?.connected || false;
 
     const totalSystems = 4;
     const onlineSystems = [essOnline, pcsOnline, dgOnline, pn14Online].filter(Boolean).length;
@@ -376,7 +377,7 @@ const Dashboard = ({ realTimeData }) => {
       <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
         <div className="mb-4">
           <p className="text-sm text-gray-500 font-medium">系統連線</p>
-          <div className="flex items-baseline mt-2">
+          <div className="flex items-baseline mt-4">
             <span className="text-4xl font-bold text-gray-900">{onlineSystems}</span>
             <span className="text-2xl text-gray-400 mx-1">/</span>
             <span className="text-2xl text-gray-400">{totalSystems}</span>
@@ -414,27 +415,16 @@ const Dashboard = ({ realTimeData }) => {
         <SystemStatusCard />
 
         {/* ESS Battery 狀態卡片 */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-          <div className="mb-4">
-            <p className="text-sm text-gray-500 font-medium">ESS</p>
-            <div className="flex items-baseline mt-2">
-              <span className="text-4xl font-bold text-gray-900">
-                {(realTimeData.ess?.ups?.load || 0).toFixed(1)}
-              </span>
-              <span className="text-xl text-gray-500 ml-1">%</span>
-            </div>
-            <p className="text-sm text-blue-600 font-medium mt-2">
-              {realTimeData.ess?.pcs?.activePower > 0
-                ? 'Active: Discharging'
-                : realTimeData.ess?.pcs?.activePower < 0
-                ? 'Active: Charging'
-                : 'Active: Standby'}
-            </p>
-          </div>
-          <div className="flex items-center justify-end">
-            <Battery className="w-8 h-8 text-green-500" />
-          </div>
-        </div>
+        <MetricCard
+          title="ESS"
+          value={(realTimeData.ess?.ups?.load || 0).toFixed(1)}
+          unit="%"
+          // change="1.8"
+          trend="up"
+          content={`Active: ${realTimeData.ess?.status || 'NaN'}`}
+        >
+          <Battery className="w-8 h-8 text-green-500" />
+        </MetricCard>
 
         <MetricCard
           title="PCS Frequency"
@@ -442,6 +432,7 @@ const Dashboard = ({ realTimeData }) => {
           unit="Hz"
           // change="1.8"
           trend="up"
+          content={"Status: " + (realTimeData.ess.pcs.pcsStatus || 'NaN')}
         >
           <Zap className="w-8 h-8 text-purple-500" />
         </MetricCard>
@@ -451,6 +442,7 @@ const Dashboard = ({ realTimeData }) => {
           value= {dieselData.status.engineSwitch === false ? '停止' : '運行'}
           unit=""
           // change="0"
+          content={"frequency: " + (dieselData.other.power || "0") + " kw"}
           trend="up"
         >
           <Fuel className="w-8 h-8 text-orange-500" />
