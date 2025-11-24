@@ -32,8 +32,8 @@ const App = () => {
     },
     ess: {
       switch: false,  // sbms.active
-      status: 'status',  // sbms.active   it seem like status is derived from active
-      chargeStatus: 'status',  // sbms.active Charge discharge state  it seem like status is derived from active
+      status: 'status',  // 系統狀態 sbms.active   it seem like status is derived from active
+      chargeStatus: 'status',  // 充放電狀態 sbms.active Charge discharge state  it seem like status is derived from active
 
       voltage: 0,  // sbms.voltage
       current: 0,  // sbms.current
@@ -50,32 +50,41 @@ const App = () => {
         temperature: 0  // sbms.rack4.temperature
       },
       ups: {
-        load: 0,  // sbms.soc
+        soc: 0,  // sbms.soc
         status: 'normal'  // sbms.connected
       },
+      //Air Conditioner 空調系統
       aircon: {
-        status: 'Running',  // 假數據
-        temperature: 3,  // 假數據
-        humidity: 50,  // 假數據
-        mode: 'Cooling'  // 假數據
+        humidity: 0,  // Ess.ac_humidity 濕度
+        mode: 'N/A',  // Ess.ac_mode 模式: 暖氣/冷氣
+        status: 'N/A',  // Ess.ac_status 狀態: 運轉/停止
+        temperature: 0,  // Ess.ac_temperature 溫度
       },
       pcs: {
-        frequency: 0,  // pcs.frequency
-        voltage: 0,  // pcs.linevoltage
-        current: 0,  // pcs.current
-        status: 'normal',  // pcs.connected
-        activePower: 0,  // pcs.power
-        reactivePower: 0,  // 無後端數據
-        load: 0,  // 計算自 pcs.power
-        connectionStatus: 'Off',  // pcs.connected
-        operatingMode: '微電網',  // pcs.operationmode
-        pcsStatus: 'standby',  // pcs.pcsstatus
-        gridStatus: 'Grid Disconnected',  // pcs.gridstatus
-        supplyFrequency: 0,  // pcs.supplyfrequency
-        dcVoltage: 0,  // pcs.dcvoltage
-        fault: '正常',  // pcs.fault
-        lineVoltage: 0,  // pcs.linevoltage
-        lineFrequency: 0  // pcs.linefrequency
+        status: 'normal',  // pcs.connected 連線狀態
+        current: 0,  // pcs.current 充電電流
+        dcLinkVoltage: 0,  // pcs.dcvoltage 直流電壓
+        fault: '正常',  // pcs.fault 故障代碼
+        frequency: 0,  // pcs.frequency 目標頻率
+        voltage: 0,  // pcs.linevoltage 偵測電壓
+        gauge: {
+        max: 60.23, //最高目標頻率設定
+        min: 59.77, // 最低目標頻率設定
+        target: 60, // 目標頻率
+        zone_high: 60.02, // 頻率高警戒值
+        zone_low: 59.9 // 頻率低警戒值
+        },
+        gridStatus: 'Grid Disconnected',  // pcs.gridstatus 微電網狀態
+        ip: "192.168.127.231", // PCS設備位置
+        lineFrequency: 0,  // pcs.linefrequency 偵測頻率
+        lineVoltage: 0,  // pcs.linevoltage 偵測電壓
+        name: "PCS", // PCS設備名稱
+        operatingMode: '微電網',  // pcs.operationmode 運作模式
+        pcsStatus: 'standby',  // pcs.pcsstatus 充放電狀態
+        port: 502, // PCS通訊埠
+        power: 0,  // 計算自 pcs.power 輸出功率
+        supplyFrequency: 0,  // pcs.supplyfrequency 輸出頻率
+        temperature: 0,  // pcs.temperature 溫度
       }
     },
     diesel: {
@@ -181,6 +190,11 @@ const App = () => {
             status: data.devices.pn14?.status === 'Inactive' ? 'standby' : 'active'
           },
           ess: {
+            //Air Conditioner 空調系統
+            ac_humidity: 70,
+            ac_mode: "Cooling",
+            ac_status: "Running",
+            ac_temperature: 30,
             // ESS Battery 外層控制
             switch: data.devices.sbms?.active || false,
             status: data.devices.sbms?.active || "N/A",
@@ -203,36 +217,33 @@ const App = () => {
 
             // UPS 系統
             ups: {
-              load: Math.round((data.devices.sbms?.soc || 0)), // 使用 SOC 作為負載
+              soc: data.devices.sbms?.soc || 0, // 使用 SOC 作為負載
               status: data.devices.sbms?.connected ? 'normal' : 'offline'
             },
 
             // 空調系統 (暫時使用假數據，因為後端沒有相關數據)
             aircon: {
-              status: 'Running',
-              temperature: 3,
-              humidity: 50,
-              mode: 'Cooling'
+              humidity: data.devices.sbms?.ac_humidity || 0,
+              mode: data.devices.sbms?.ac_mode || 'N/A',
+              status: data.devices.sbms?.ac_status || 'N/A',
+              temperature: data.devices.sbms?.ac_temperature || 0,
             },
-
             // PCS 頻率控制
             pcs: {
               frequency: data.devices.pcs?.frequency || 0,
+              dcLinkVoltage: data.devices.pcs?.dcvoltage || 0,
               voltage: data.devices.pcs?.linevoltage || 0,
               current: data.devices.pcs?.current || 0,
               status: data.devices.pcs?.connected ? 'normal' : 'offline',
-              activePower: data.devices.pcs?.power || 0,
-              reactivePower: 0, // 後端沒有此數據
-              load: Math.round((data.devices.pcs?.power || 0) / 100 * 100), // 簡單計算負載百分比
-              connectionStatus: data.devices.pcs?.connected ? 'On' : 'Off',
-              operatingMode: data.devices.pcs?.operationmode ? '微電網' : '主網',
+              power: data.devices.pcs?.power || 0,
+              operatingMode: data.devices.pcs?.operationmode|| 'N/A',
               pcsStatus: data.devices.pcs?.pcsstatus === 1 ? 'charging' : 'standby',
               gridStatus: data.devices.pcs?.gridstatus === 1 ? 'Grid Connected' : 'Grid Disconnected',
               supplyFrequency: data.devices.pcs?.supplyfrequency || 0,
-              dcVoltage: data.devices.pcs?.dcvoltage || 0,
-              fault: data.devices.pcs?.fault === 0 ? '正常' : '故障',
+              fault: data.devices.pcs?.fault || 'Not found',
               lineVoltage: data.devices.pcs?.linevoltage || 0,
-              lineFrequency: data.devices.pcs?.linefrequency || 0
+              lineFrequency: data.devices.pcs?.linefrequency || 0,
+              temperature: data.devices.pcs?.temperature || 0
             }
           },
           diesel: {
@@ -381,7 +392,8 @@ const App = () => {
     { id: 'ess', label: 'ESS Battery', icon: Battery },
     { id: 'diesel', label: 'Diesel Gen', icon: Fuel },
     { id: 'reports', label: 'Reports', icon: FileText },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'etica', label: 'ETICA ESS', icon: Zap }
   ];
 
   // 錯誤顯示組件
@@ -457,6 +469,17 @@ const App = () => {
         />;
       case 'settings':
         return <SettingsPage {...props} />;
+      case 'etica':
+        return (
+          <div className="w-full h-full" style={{ minHeight: 'calc(100vh - 150px)' }}>
+            <iframe
+              src="http://192.168.127.246/#/"
+              title="ETICA ESS"
+              className="w-full h-full border-0 rounded-lg"
+              style={{ minHeight: 'calc(100vh - 150px)' }}
+            />
+          </div>
+        );
       default:
         return <Dashboard {...props} />;
     }
@@ -553,7 +576,8 @@ const App = () => {
                   {selectedCategory === 'skysails' ? 'SkySails PN14' :
                     selectedCategory === 'ess' ? 'ESS Battery' :
                       selectedCategory === 'diesel' ? 'Diesel Generator' :
-                        selectedCategory}
+                        selectedCategory === 'etica' ? 'ETICA ESS' :
+                          selectedCategory}
                 </h2>
                 {error && (
                   <span className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
@@ -594,7 +618,7 @@ const App = () => {
 
           {/* 主內容區域 - 單一滾動容器，美化滾動條 */}
           <main
-            className="flex-1 p-4 lg:p-8"
+            className={`flex-1 ${selectedCategory === 'etica' ? 'p-0' : 'p-4 lg:p-8'}`}
             style={{
               backgroundImage: `url('/images/skysails-bg.jpg')`,
               backgroundSize: 'auto 1500px',

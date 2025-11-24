@@ -238,8 +238,8 @@ const toggleEdit = async (key) => {
     <div className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${className}`}>
         {status && (
           <span className={`px-2 py-1 right-0 rounded-full text-[0.65rem] font-medium whitespace-nowrap flex-shrink-0 self-start ${
-            status === 'activate' || status === 'normal' || status === 'Running' ? 'bg-green-100 text-green-800' :
-            status === 'charging' ? 'bg-blue-100 text-blue-800' :
+            status === 'activate' || status.toUpperCase() === 'CHARGE' || status === 'normal' || status === 'Running' ? 'bg-green-100 text-green-800' :
+            status === 'charging' || status.toUpperCase() === 'DISCHARGE' ? 'bg-blue-100 text-blue-800' :
             status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
             status === 'offline' || status === 'OFFLINE' ? 'bg-red-100 text-red-800 font-semibold' :
             'bg-gray-200 text-gray-800'
@@ -350,15 +350,15 @@ const toggleEdit = async (key) => {
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">輸入電壓</span>
-              <span className="font-medium">{((essData.voltage || essData.ups?.voltage || 100) * 1.1).toFixed(1)} V</span>
+              <span className="font-medium">{((essData.voltage.toFixed(2) || essData.ups?.voltage.toFixed(2) || 100) * 1.1).toFixed(1)} V</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">輸出電壓</span>
-              <span className="font-medium">{(essData.voltage || essData.ups?.voltage || 100)} V</span>
+              <span className="font-medium">{(essData.voltage.toFixed(2) || essData.ups?.voltage.toFixed(2) || 100)} V</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.ups?.load || NaN}%</span>
+              <span className="font-medium">{essData.ups?.soc || NaN}%</span>
             </div>
           </div>
           <div className="space-y-4">
@@ -410,7 +410,7 @@ const toggleEdit = async (key) => {
                 strokeWidth="2"
                 points={Array.from({length: 20}, (_, i) => {
                   const x = (i * 300) / 19;
-                  const y = 60 - ((essData.ups?.load || 90) / 100 * 50) + (Math.random() - 0.5) * 10;
+                  const y = 60 - ((essData.ups?.soc || 90) / 100 * 50) + (Math.random() - 0.5) * 10;
                   return `${x},${y}`;
                 }).join(' ')}
               />
@@ -431,14 +431,14 @@ const toggleEdit = async (key) => {
           status={essData.aircon.status === 'Running' ? 'activate' : 'offline'}
         />
         <MetricCard
-          title="系統溫度"
+          title="室溫"
           value={essData.aircon.temperature}
           unit="°C"
           icon={Thermometer}
           status="normal"
         />
         <MetricCard
-          title="製冷設定"
+          title="溫度設定"
           value={essData.aircon.temperature}
           unit="°C"
           icon={Thermometer}
@@ -523,161 +523,63 @@ const toggleEdit = async (key) => {
 
   const PCSSystem = () => (
     <div className="space-y-6">
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="頻率控制"
-          value={essData.pcs.frequency}
-          unit="Hz"
-          icon={Activity}
-          status={essData.pcs.status}
-          editable={true}
-          category="pcs"
-          field="frequency"
-        />
-        <MetricCard
-          title="電壓"
-          value={essData.pcs.voltage}
-          unit="V"
-          icon={Zap}
-          status={essData.pcs.status}
-        />
-        <MetricCard
-          title="電流"
-          value={essData.pcs.current}
-          unit="A"
-          icon={Battery}
-          status={essData.pcs.status}
-        />
-        <MetricCard
-          title="負載"
-          value={essData.pcs.load}
-          unit="%"
-          icon={Gauge}
-          status={essData.pcs.load > 90 ? 'warning' : 'normal'}
-        />
-      </div> */}
-
-      {/* Admin 權限提示與頻率控制按鈕 */}
-      {/* {isAdmin && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center space-x-2">
-                <Settings className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">管理員模式</span>
-              </div>
-              <p className="text-xs text-blue-600 mt-1">您可以點擊「手動調整」來修改頻率控制參數</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 電力參數 (Power & Voltage) */}
+        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold mb-6">電力參數</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">偵測電壓</span>
+              <span className="font-medium">{essData.pcs.lineVoltage || 0} V</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">輸出功率</span>
+              <span className="font-medium">{(essData.pcs.power || 0).toFixed(2)} kW</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">DC-Link電壓</span>
+              <span className="font-medium">{essData.pcs.dcLinkVoltage || 0} V</span>
             </div>
           </div>
         </div>
-      )} */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 頻率參數 (Frequency) */}
+        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-semibold mb-6">頻率參數</h3>
+          <div className="space-y-4">
+            
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">輸出頻率</span>
+              <span className="font-medium">{(essData.pcs.supplyFrequency || 0).toFixed(2)} Hz</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+              <span className="text-gray-700">偵測頻率</span>
+              <span className="font-medium">{(essData.pcs.lineFrequency || 0).toFixed(2)} Hz</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 系統狀態 (System Status) */}
         <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold mb-6">系統狀態</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">電壓</span>
-              <span className="font-medium">{essData.pcs.voltage} V</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">供應頻率</span>
-              <span className="font-medium">{essData.pcs.supplyFrequency.toFixed(2)} Hz</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.pcs.load.toFixed(1)}%</span>
+              <span className="text-gray-700">溫度</span>
+              <span className="font-medium">{(essData.pcs.temperature || 0).toFixed(1)} °C</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">故障狀態</span>
-              <span className={`font-medium ${essData.pcs.fault === '正常' ? 'text-green-600' : 'text-red-600'}`}>
-                {essData.pcs.fault}
+              <span className={`font-medium ${essData.pcs.fault === 'Not found' ?'text-red-600':'text-green-600'}`}>
+                {essData.pcs.fault || 'Not found'}
               </span>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">功率控制</h3>
-          <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">有效功率</span>
-              <span className="font-medium text-blue-600">{essData.pcs.activePower} kW</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">無效功率</span>
-              <span className="font-medium">{essData.pcs.reactivePower} kW</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">電壓</span>
-              <span className="font-medium">{essData.pcs.voltage} V</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.pcs.load}%</span>
+              <span className="text-gray-700">模式</span>
+              <span className="font-medium">{essData.pcs.operatingMode || 'NaN'}</span>
             </div>
           </div>
         </div>
       </div>
-
-      {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">詳細參數</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">電力參數</h4>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">DC電壓:</span>
-                <span className="font-medium">{essData.pcs.dcVoltage} V</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">線電壓:</span>
-                <span className="font-medium">{essData.pcs.lineVoltage} V</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">線頻率:</span>
-                <span className="font-medium">{essData.pcs.lineFrequency} Hz</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">運行狀態</h4>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">運行模式:</span>
-                <span className="font-medium">{essData.pcs.operatingMode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">PCS狀態:</span>
-                <span className="font-medium">{essData.pcs.pcsStatus}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">連線狀態:</span>
-                <span className="font-medium">{essData.pcs.connectionStatus}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">效能指標</h4>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">轉換效率:</span>
-                <span className="font-medium">94.2%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">負載率:</span>
-                <span className="font-medium">{essData.pcs.load}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">運行時間:</span>
-                <span className="font-medium">156.3 小時</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 
@@ -867,7 +769,7 @@ const toggleEdit = async (key) => {
 
                       {/* 當前數值填充弧形陰影 - 分段顯示 */}
                       {(() => {
-                        const currentValue = essData.ups?.load || 0;
+                        const currentValue = essData.ups?.soc || 0;
                         const segments = [];
                         const outerRadius = 84;  // 外圈半徑
                         const innerRadius = 68;  // 內圈半徑
@@ -982,8 +884,8 @@ const toggleEdit = async (key) => {
                       <line
                         x1="110"
                         y1="100"
-                        x2={110 + 65 * Math.cos((180 - (essData.ups?.load || 0) * 1.8) * Math.PI / 180)}
-                        y2={100 - 65 * Math.sin((180 - (essData.ups?.load || 0) * 1.8) * Math.PI / 180)}
+                        x2={110 + 65 * Math.cos((180 - (essData.ups?.soc || 0) * 1.8) * Math.PI / 180)}
+                        y2={100 - 65 * Math.sin((180 - (essData.ups?.soc || 0) * 1.8) * Math.PI / 180)}
                         stroke="#1e293b"
                         strokeWidth="2.5"
                         strokeLinecap="round"
@@ -995,20 +897,20 @@ const toggleEdit = async (key) => {
                   {/* 負載資訊 */}
                   <div className="text-center -mt-2">
                     <div className={`text-xl font-bold ${
-                      (essData.ups?.load || 0) < 20 ? 'text-red-600' :
-                      (essData.ups?.load || 0) < 50 ? 'text-orange-300' :
-                      (essData.ups?.load || 0) <= 90 ? 'text-green-600' :
+                      (essData.ups?.soc || 0) < 20 ? 'text-red-600' :
+                      (essData.ups?.soc || 0) < 50 ? 'text-orange-300' :
+                      (essData.ups?.soc || 0) <= 90 ? 'text-green-600' :
                       'text-red-600'
-                    }`}>{(essData.ups?.load || 0).toFixed(0)}%</div>
+                    }`}>{(essData.ups?.soc || 0).toFixed(0)}%</div>
                     <div className={`text-sm font-medium mt-1 ${
-                      (essData.ups?.load || 0) < 20 ? 'text-red-600' :
-                      (essData.ups?.load || 0) < 50 ? 'text-orange-300' :
-                      (essData.ups?.load || 0) <= 90 ? 'text-green-600' :
+                      (essData.ups?.soc || 0) < 20 ? 'text-red-600' :
+                      (essData.ups?.soc || 0) < 50 ? 'text-orange-300' :
+                      (essData.ups?.soc || 0) <= 90 ? 'text-green-600' :
                       'text-red-600'
                     }`}>
-                      {(essData.ups?.load || 0) < 20 ? 'Risk' :
-                       (essData.ups?.load || 0) < 50 ? 'Low' :
-                       (essData.ups?.load || 0) <= 90 ? 'Normal' :
+                      {(essData.ups?.soc || 0) < 20 ? 'Risk' :
+                       (essData.ups?.soc || 0) < 50 ? 'Low' :
+                       (essData.ups?.soc || 0) <= 90 ? 'Normal' :
                        'Risk'}
                     </div>
                   </div>

@@ -417,7 +417,7 @@ const Dashboard = ({ realTimeData }) => {
         {/* ESS Battery 狀態卡片 */}
         <MetricCard
           title="ESS"
-          value={(realTimeData.ess?.ups?.load || 0).toFixed(1)}
+          value={(realTimeData.ess?.ups?.soc || 0).toFixed(1)}
           unit="%"
           // change="1.8"
           trend="up"
