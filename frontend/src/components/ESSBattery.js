@@ -342,59 +342,43 @@ const toggleEdit = async (key) => {
     <div className="space-y-6">
       <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
         <h3 className="text-lg font-semibold mb-6">UPS 系統監控</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">UPS狀態</span>
-              <span className="font-medium text-green-600">{essData.status}</span>
+              <span className={`font-medium ${essData.ups?.ups_status === 'Running' ? 'text-green-600' : 'text-gray-600'}`}>
+                {essData.ups?.ups_status || 'N/A'}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">輸入電壓</span>
-              <span className="font-medium">{((essData.voltage.toFixed(2) || essData.ups?.voltage.toFixed(2) || 100) * 1.1).toFixed(1)} V</span>
+              <span className="font-medium">{(essData.ups?.ups_involtage || 0).toFixed(1)} V</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">輸出電壓</span>
-              <span className="font-medium">{(essData.voltage.toFixed(2) || essData.ups?.voltage.toFixed(2) || 100)} V</span>
+              <span className="font-medium">{(essData.ups?.ups_outvoltage || 0).toFixed(1)} V</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">負載</span>
-              <span className="font-medium">{essData.ups?.soc || NaN}%</span>
+              <span className="text-gray-700">負載百分比</span>
+              <span className="font-medium">{(essData.ups?.ups_loadpercent || 0).toFixed(1)}%</span>
             </div>
           </div>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
               <span className="text-gray-700">電池電壓</span>
-              <span className="font-medium">{((essData.voltage || essData.ups?.voltage || 100) * 0.9).toFixed(1)} V</span>
+              <span className="font-medium">{(essData.ups?.ups_batteryvoltage || 0).toFixed(1)} V</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">充電電流</span>
-              <span className="font-medium">{(essData.current || essData.ups?.current || 10).toFixed(1)} A</span>
+              <span className="text-gray-700">輸出電流</span>
+              <span className="font-medium">{(essData.ups?.ups_outcurrent || 0).toFixed(1)} A</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">運行時間</span>
-              <span className="font-medium">245.2 小時</span>
+              <span className="text-gray-700">輸出功率</span>
+              <span className="font-medium">{(essData.ups?.ups_outpower || 0).toFixed(1)} W</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">備用時間</span>
-              <span className="font-medium">2.5 小時</span>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">內部溫度</span>
-              <span className="font-medium">{(essData.temperature || essData.ups?.temperature || 3).toFixed(1)}°C</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">風扇狀態</span>
-              <span className="font-medium text-blue-600">Auto</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">告警狀態</span>
-              <span className="font-medium text-green-600">Normal</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">維護狀態</span>
-              <span className="font-medium text-green-600">Good</span>
+              <span className="text-gray-700">電池容量</span>
+              <span className="font-medium">{(essData.ups?.ups_capacity || 0).toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -410,7 +394,7 @@ const toggleEdit = async (key) => {
                 strokeWidth="2"
                 points={Array.from({length: 20}, (_, i) => {
                   const x = (i * 300) / 19;
-                  const y = 60 - ((essData.ups?.soc || 90) / 100 * 50) + (Math.random() - 0.5) * 10;
+                  const y = 60 - ((essData.soc || 90) / 100 * 50) + (Math.random() - 0.5) * 10;
                   return `${x},${y}`;
                 }).join(' ')}
               />
@@ -769,7 +753,7 @@ const toggleEdit = async (key) => {
 
                       {/* 當前數值填充弧形陰影 - 分段顯示 */}
                       {(() => {
-                        const currentValue = essData.ups?.soc || 0;
+                        const currentValue = essData.soc || 0;
                         const segments = [];
                         const outerRadius = 84;  // 外圈半徑
                         const innerRadius = 68;  // 內圈半徑
@@ -884,8 +868,8 @@ const toggleEdit = async (key) => {
                       <line
                         x1="110"
                         y1="100"
-                        x2={110 + 65 * Math.cos((180 - (essData.ups?.soc || 0) * 1.8) * Math.PI / 180)}
-                        y2={100 - 65 * Math.sin((180 - (essData.ups?.soc || 0) * 1.8) * Math.PI / 180)}
+                        x2={110 + 65 * Math.cos((180 - (essData.soc || 0) * 1.8) * Math.PI / 180)}
+                        y2={100 - 65 * Math.sin((180 - (essData.soc || 0) * 1.8) * Math.PI / 180)}
                         stroke="#1e293b"
                         strokeWidth="2.5"
                         strokeLinecap="round"
@@ -897,20 +881,20 @@ const toggleEdit = async (key) => {
                   {/* 負載資訊 */}
                   <div className="text-center -mt-2">
                     <div className={`text-xl font-bold ${
-                      (essData.ups?.soc || 0) < 20 ? 'text-red-600' :
-                      (essData.ups?.soc || 0) < 50 ? 'text-orange-300' :
-                      (essData.ups?.soc || 0) <= 90 ? 'text-green-600' :
+                      (essData.soc || 0) < 20 ? 'text-red-600' :
+                      (essData.soc || 0) < 50 ? 'text-orange-300' :
+                      (essData.soc || 0) <= 90 ? 'text-green-600' :
                       'text-red-600'
-                    }`}>{(essData.ups?.soc || 0).toFixed(0)}%</div>
+                    }`}>{(essData.soc || 0).toFixed(0)}%</div>
                     <div className={`text-sm font-medium mt-1 ${
-                      (essData.ups?.soc || 0) < 20 ? 'text-red-600' :
-                      (essData.ups?.soc || 0) < 50 ? 'text-orange-300' :
-                      (essData.ups?.soc || 0) <= 90 ? 'text-green-600' :
+                      (essData.soc || 0) < 20 ? 'text-red-600' :
+                      (essData.soc || 0) < 50 ? 'text-orange-300' :
+                      (essData.soc || 0) <= 90 ? 'text-green-600' :
                       'text-red-600'
                     }`}>
-                      {(essData.ups?.soc || 0) < 20 ? 'Risk' :
-                       (essData.ups?.soc || 0) < 50 ? 'Low' :
-                       (essData.ups?.soc || 0) <= 90 ? 'Normal' :
+                      {(essData.soc || 0) < 20 ? 'Risk' :
+                       (essData.soc || 0) < 50 ? 'Low' :
+                       (essData.soc || 0) <= 90 ? 'Normal' :
                        'Risk'}
                     </div>
                   </div>
@@ -945,6 +929,13 @@ const toggleEdit = async (key) => {
               value={essData.voltage}
               unit="V"
               icon={Zap}
+              status="normal"
+            />
+            <MetricCard
+              title="電池的健康狀態"
+              value={essData.soh}
+              unit="%"
+              icon={Battery}
               status="normal"
             />
           </div>

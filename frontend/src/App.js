@@ -49,9 +49,18 @@ const App = () => {
       rack4: {
         temperature: 0  // sbms.rack4.temperature
       },
+      soc: 0,  // sbms.soc
+      soh: 100, // sbms.soh
       ups: {
-        soc: 0,  // sbms.soc
-        status: 'normal'  // sbms.connected
+        status: 'normal',  // sbms.connected
+        ups_batteryvoltage: 0, //sbms.ups_batteryvoltage
+        ups_capacity: 0, //sbms.ups_capacity
+        ups_involtage: 0, //sbms.ups_involtage
+        ups_loadpercent: 0, //sbms.ups_loadpercent
+        ups_outcurrent: 0, //sbms.ups_outcurrent
+        ups_outpower: 0, //sbms.ups_outpower
+        ups_outvoltage: 0, //sbms.ups_outvoltage
+        ups_status: "Running", //sbms.ups_status
       },
       //Air Conditioner 空調系統
       aircon: {
@@ -63,7 +72,7 @@ const App = () => {
       pcs: {
         status: 'normal',  // pcs.connected 連線狀態
         current: 0,  // pcs.current 充電電流
-        dcLinkVoltage: 0,  // pcs.dcvoltage 直流電壓
+        dcLinkVoltage: 0,  // pcs.dcvoltage DC-Link電壓(直流電壓)
         fault: '正常',  // pcs.fault 故障代碼
         frequency: 0,  // pcs.frequency 目標頻率
         voltage: 0,  // pcs.linevoltage 偵測電壓
@@ -214,11 +223,19 @@ const App = () => {
               temperature: data.devices.sbms?.rack4?.temperature || 0
             },
             // temperature: data.devices.sbms?.temperature || 0,
-
+            soc: data.devices.sbms?.soc || 0, // sbms.soc 
+            soh: data.devices.sbms?.soh || 100, // sbms.soh 電池的健康狀態
             // UPS 系統
             ups: {
-              soc: data.devices.sbms?.soc || 0, // 使用 SOC 作為負載
-              status: data.devices.sbms?.connected ? 'normal' : 'offline'
+              status: data.devices.sbms?.connected ? 'normal' : 'offline',
+              ups_batteryvoltage: data.devices.sbms?.ups_batteryvoltage || 0,
+              ups_capacity: data.devices.sbms?.ups_capacity || 0,
+              ups_involtage: data.devices.sbms?.ups_involtage || 0,
+              ups_loadpercent: data.devices.sbms?.ups_loadpercent || 0,
+              ups_outcurrent: data.devices.sbms?.ups_outcurrent || 0,
+              ups_outpower: data.devices.sbms?.ups_outpower || 0,
+              ups_outvoltage: data.devices.sbms?.ups_outvoltage || 0,
+              ups_status: data.devices.sbms?.ups_status || 'N/A',
             },
 
             // 空調系統 (暫時使用假數據，因為後端沒有相關數據)
