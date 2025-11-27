@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Gauge,RefreshCw } from 'lucide-react';
 
-const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute }) => {
+const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState('pcs');
   const [isAdmin, setIsAdmin] = useState(true); // TODO: 從權限管理系統獲取
   const [isEditing, setIsEditing] = useState({});
@@ -235,7 +235,7 @@ const toggleEdit = async (key) => {
 };
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, isSwitch = false, onToggle, className = "", editable = false, category = "", field = "" }) => (
-    <div className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${className}`}>
+    <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${className}`}>
         {status && (
           <span className={`px-2 py-1 right-0 rounded-full text-[0.65rem] font-medium whitespace-nowrap flex-shrink-0 self-start ${
             status === 'activate' || status.toUpperCase() === 'CHARGE' || status === 'normal' || status === 'Running' ? 'bg-green-100 text-green-800' :
@@ -249,11 +249,11 @@ const toggleEdit = async (key) => {
         )}
       <div className="flex items-start justify-between mb-4 mt-3 gap-2">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
-          <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
-            <Icon className="w-5 h-5 text-blue-600" />
+          <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg flex-shrink-0`}>
+            <Icon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm xl:text-base font-semibold text-gray-900 whitespace-nowrap pr-2">{title}</h3>
+            <h3 className={`text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap pr-2`}>{title}</h3>
             {editable && isAdmin && (
               <button
                 onClick={() => {
@@ -324,10 +324,10 @@ const toggleEdit = async (key) => {
             </div>
           ) : (
             <div className="flex items-baseline space-x-1">
-              <span className={`font-bold text-gray-900 ${category === 'pcs' && field === 'frequency' ? 'text-xl xl:text-2xl' : 'text-xl xl:text-2xl'}`}>
+              <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} ${category === 'pcs' && field === 'frequency' ? 'text-xl xl:text-2xl' : 'text-xl xl:text-2xl'}`}>
                 {typeof value === 'number' ?(category === 'pcs' && field === 'frequency' ? value.toFixed(2) : value.toFixed(1)): value}
               </span>
-              <span className="text-sm text-gray-500">{unit}</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{unit}</span>
               {editable && !isAdmin && (
                 <span className="text-xs text-gray-400 ml-2">(唯讀)</span>
               )}
@@ -340,53 +340,53 @@ const toggleEdit = async (key) => {
 
   const UPSSystem = () => (
     <div className="space-y-6">
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">UPS 系統監控</h3>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>UPS 系統監控</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">UPS狀態</span>
-              <span className={`font-medium ${essData.ups?.ups_status === 'Running' ? 'text-green-600' : 'text-gray-600'}`}>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>UPS狀態</span>
+              <span className={`font-medium ${essData.ups?.ups_status === 'Running' ? 'text-green-600' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 {essData.ups?.ups_status || 'N/A'}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸入電壓</span>
-              <span className="font-medium">{(essData.ups?.ups_involtage || 0).toFixed(1)} V</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸入電壓</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_involtage || 0).toFixed(1)} V</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸出電壓</span>
-              <span className="font-medium">{(essData.ups?.ups_outvoltage || 0).toFixed(1)} V</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸出電壓</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_outvoltage || 0).toFixed(1)} V</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">負載百分比</span>
-              <span className="font-medium">{(essData.ups?.ups_loadpercent || 0).toFixed(1)}%</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>負載百分比</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_loadpercent || 0).toFixed(1)}%</span>
             </div>
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">電池電壓</span>
-              <span className="font-medium">{(essData.ups?.ups_batteryvoltage || 0).toFixed(1)} V</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>電池電壓</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_batteryvoltage || 0).toFixed(1)} V</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸出電流</span>
-              <span className="font-medium">{(essData.ups?.ups_outcurrent || 0).toFixed(1)} A</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸出電流</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_outcurrent || 0).toFixed(1)} A</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸出功率</span>
-              <span className="font-medium">{(essData.ups?.ups_outpower || 0).toFixed(1)} W</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸出功率</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_outpower || 0).toFixed(1)} W</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">電池容量</span>
-              <span className="font-medium">{(essData.ups?.ups_capacity || 0).toFixed(1)}%</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>電池容量</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_capacity || 0).toFixed(1)}%</span>
             </div>
           </div>
         </div>
 
         {/* UPS 負載趨勢 */}
         <div className="mt-6">
-          <h4 className="font-medium text-gray-900 mb-4">UPS 負載趨勢</h4>
-          <div className="h-32 bg-gray-50 rounded-lg p-4">
+          <h4 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>UPS 負載趨勢</h4>
+          <div className={`h-32 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg p-4`}>
             <svg className="w-full h-full" viewBox="0 0 300 80">
               <polyline
                 fill="none"
@@ -509,57 +509,57 @@ const toggleEdit = async (key) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 電力參數 (Power & Voltage) */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">電力參數</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>電力參數</h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">偵測電壓</span>
-              <span className="font-medium">{essData.pcs.lineVoltage || 0} V</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>偵測電壓</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{essData.pcs.lineVoltage || 0} V</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸出功率</span>
-              <span className="font-medium">{(essData.pcs.power || 0).toFixed(2)} kW</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸出功率</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.pcs.power || 0).toFixed(2)} kW</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">DC-Link電壓</span>
-              <span className="font-medium">{essData.pcs.dcLinkVoltage || 0} V</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>DC-Link電壓</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{essData.pcs.dcLinkVoltage || 0} V</span>
             </div>
           </div>
         </div>
 
         {/* 頻率參數 (Frequency) */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">頻率參數</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>頻率參數</h3>
           <div className="space-y-4">
-            
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">輸出頻率</span>
-              <span className="font-medium">{(essData.pcs.supplyFrequency || 0).toFixed(2)} Hz</span>
+
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>輸出頻率</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.pcs.supplyFrequency || 0).toFixed(2)} Hz</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">偵測頻率</span>
-              <span className="font-medium">{(essData.pcs.lineFrequency || 0).toFixed(2)} Hz</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>偵測頻率</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.pcs.lineFrequency || 0).toFixed(2)} Hz</span>
             </div>
           </div>
         </div>
 
         {/* 系統狀態 (System Status) */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">系統狀態</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>系統狀態</h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">溫度</span>
-              <span className="font-medium">{(essData.pcs.temperature || 0).toFixed(1)} °C</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>溫度</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.pcs.temperature || 0).toFixed(1)} °C</span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">故障狀態</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>故障狀態</span>
               <span className={`font-medium ${essData.pcs.fault === 'Not found' ?'text-red-600':'text-green-600'}`}>
                 {essData.pcs.fault || 'Not found'}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">模式</span>
-              <span className="font-medium">{essData.pcs.operatingMode || 'NaN'}</span>
+            <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>模式</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{essData.pcs.operatingMode || 'NaN'}</span>
             </div>
           </div>
         </div>
@@ -585,12 +585,12 @@ const toggleEdit = async (key) => {
       {/* ESS Battery 系統控制 與 PCS 頻率控制並排 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 左側 - ESS Battery 系統控制 */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">ESS Battery 系統控制</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>ESS Battery 系統控制</h3>
 
           {/* ESS 開關 with 負載儀表板 */}
           <div className="mb-6">
-            <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+            <div className={`${isDarkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300`}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 左側 - ESS 開關 */}
                 <div>
@@ -601,11 +601,11 @@ const toggleEdit = async (key) => {
                   </span>
                   <div className="flex items-start justify-between mt-3">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Power className="w-5 h-5 text-blue-600" />
+                      <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg`}>
+                        <Power className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
                       </div>
                       <div>
-                        <h3 className="text-sm xl:text-base font-semibold text-gray-900">電網建立 (ESS)</h3>
+                        <h3 className={`text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>電網建立 (ESS)</h3>
                       </div>
                     </div>
                   </div>
@@ -942,8 +942,8 @@ const toggleEdit = async (key) => {
         </div>
 
         {/* 右側 - PCS 頻率控制 */}
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold mb-6">PCS 頻率控制</h3>
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>PCS 頻率控制</h3>
 
           {/* PCS 頻率儀表板 - 置中顯示 */}
           <div className="flex flex-col items-center justify-center mb-6">
@@ -1061,12 +1061,12 @@ const toggleEdit = async (key) => {
 
           {/* Admin 權限提示 */}
           {isAdmin && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+            <div className={`${isDarkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-lg p-3 mb-6`}>
               <div className="flex items-center space-x-2">
-                <Settings className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">管理員模式</span>
+                <Settings className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-800'}`}>管理員模式</span>
               </div>
-              <p className="text-xs text-blue-600 mt-1">您可以點擊「手動調整」來修改頻率控制參數</p>
+              <p className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} mt-1`}>您可以點擊「手動調整」來修改頻率控制參數</p>
             </div>
           )}
 
@@ -1106,23 +1106,27 @@ const toggleEdit = async (key) => {
       </div>
 
       {/* 標籤頁導航 */}
-      <div className="bg-white/70 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-200">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl shadow-sm border overflow-hidden`}>
+        <div className={`flex ${isDarkMode ? 'border-b border-gray-700' : 'border-b border-gray-200'}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-4 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? isDarkMode
+                    ? 'bg-blue-900/50 text-blue-300 border-b-2 border-blue-500'
+                    : 'bg-blue-50 text-blue-700 border-b-2 border-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               {tab.label}
             </button>
           ))}
         </div>
-        
+
         <div className="p-6">
           <ActiveComponent />
         </div>

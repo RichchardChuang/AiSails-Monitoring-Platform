@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Download, Filter, Search, Calendar, Power, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Activity, RefreshCw } from 'lucide-react';
 
-const Reports = ({ realTimeData, apiRequest }) => {
+const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
   const [logs, setLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [filterType, setFilterType] = useState('all');
@@ -60,7 +60,7 @@ const Reports = ({ realTimeData, apiRequest }) => {
     fetchLogs();
     
     // 設定定期抓取（每3秒）
-    const interval = setInterval(fetchLogs, 3000);
+    const interval = setInterval(fetchLogs, 300000);
     
     // 清理函數
     return () => clearInterval(interval);
@@ -290,40 +290,40 @@ const Reports = ({ realTimeData, apiRequest }) => {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Total Operations</p>
-              <p className="text-2xl font-bold text-gray-900">{summary.total}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>Total Operations</p>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{summary.total}</p>
             </div>
             <FileText className="w-8 h-8 text-blue-500" />
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Successful</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>Successful</p>
               <p className="text-2xl font-bold text-green-600">{summary.success || 0}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Warnings</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>Warnings</p>
               <p className="text-2xl font-bold text-yellow-600">{summary.warning || 0}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-yellow-500" />
           </div>
         </div>
 
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Errors</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>Errors</p>
               <p className="text-2xl font-bold text-red-600">{summary.error || 0}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-red-500" />
@@ -337,26 +337,26 @@ const Reports = ({ realTimeData, apiRequest }) => {
   const LogsAndAlerts = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       {/* 警告訊息 */}
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center">
+          <h3 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             <AlertTriangle className="w-5 h-5 mr-2 text-yellow-500" />
             警告訊息
           </h3>
           <button
             onClick={() => setAlerts([])}
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className={`text-sm ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
           >
             清除
           </button>
         </div>
-        <div className="h-48 overflow-y-auto border border-gray-100 rounded-lg p-3">
+        <div className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}>
           {alerts.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">暫無警告訊息</p>
+            <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-center py-8`}>暫無警告訊息</p>
           ) : (
             <div className="space-y-2">
               {alerts.map((alert) => (
-                <div 
+                <div
                   key={alert.id}
                   className={`p-2 rounded-lg text-sm ${
                     alert.type === 'error' ? 'bg-red-50 text-red-700' :
@@ -377,40 +377,40 @@ const Reports = ({ realTimeData, apiRequest }) => {
       </div>
 
       {/* 執行紀錄 */}
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold flex items-center">
+          <h3 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             <Activity className="w-5 h-5 mr-2 text-blue-500" />
             執行紀錄
           </h3>
-          <span className="text-sm text-gray-500">
+          <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             最近 {Math.min(logs.length, 10)} 筆
           </span>
         </div>
-        <div className="h-48 overflow-y-auto border border-gray-100 rounded-lg p-3">
+        <div className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}>
           {logs.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">暫無執行紀錄</p>
+            <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-center py-8`}>暫無執行紀錄</p>
           ) : (
             <div className="space-y-2">
               {[...logs].slice(0,10).map((log) => (
-                <div 
+                <div
                   key={log.id}
-                  className="p-2 border-b border-gray-100 last:border-0"
+                  className={`p-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} last:border-0`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
+                    <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                       [{new Date(log.timestamp).toLocaleString('zh-TW')}]
                     </span>
                     {getStatusIcon(log.status)}
                   </div>
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     執行命令: {log.command}
                   </p>
                   <p className={`text-xs ${
                     log.status === 'success' ? 'text-green-600' :
                     log.status === 'error' ? 'text-red-600' :
                     log.status === 'pending' ? 'text-blue-600' :
-                    'text-gray-600'
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
                   }`}>
                     {log.details}
                   </p>
@@ -540,30 +540,30 @@ const Reports = ({ realTimeData, apiRequest }) => {
       </div> */}
 
       {/* 操作日誌列表 */}
-      <div className="bg-white/70 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold">Operation Logs</h3>
-          <p className="text-sm text-gray-500">Total: {filteredLogs.length} records</p>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl shadow-sm border overflow-hidden`}>
+        <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Operation Logs</h3>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total: {filteredLogs.length} records</p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className={isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">System</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operation</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Command</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Timestamp</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>System</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Operation</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Component</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>User</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Status</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Command</th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Details</th>
               </tr>
             </thead>
-            <tbody className="bg-white/70 divide-y divide-gray-200">
+            <tbody className={`${isDarkMode ? 'bg-gray-800/50' : 'bg-white/70'} divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <tr key={log.id} className={isDarkMode ? 'hover:bg-gray-700/50 transition-colors' : 'hover:bg-gray-50 transition-colors'}>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                     {new Date(log.timestamp).toLocaleString('zh-TW')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -573,22 +573,22 @@ const Reports = ({ realTimeData, apiRequest }) => {
                       {log.system.includes('PCS') && <ToggleRight className="w-4 h-4 text-purple-500 mr-2" />}
                       {log.system.includes('Diesel') && <Power className="w-4 h-4 text-orange-500 mr-2" />}
                       {log.system.includes('Air') && <Activity className="w-4 h-4 text-cyan-500 mr-2" />}
-                      <span className="text-sm font-medium text-gray-900">{log.system}</span>
+                      <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{log.system}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{log.operation}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.component}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.user}</td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>{log.operation}</td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{log.component}</td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{log.user}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(log.status)}
                       {getStatusBadge(log.status)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} font-mono`}>
                     {log.command || '-'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={log.details}>
+                  <td className={`px-6 py-4 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} max-w-xs truncate`} title={log.details}>
                     {log.details}
                   </td>
                 </tr>
@@ -599,8 +599,8 @@ const Reports = ({ realTimeData, apiRequest }) => {
 
         {filteredLogs.length === 0 && (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No logs found matching your criteria</p>
+            <FileText className={`w-12 h-12 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
+            <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>No logs found matching your criteria</p>
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp, Cloud, Sun, CloudRain, Navigation } from 'lucide-react';
 
-const Dashboard = ({ realTimeData }) => {
+const Dashboard = ({ realTimeData, isDarkMode }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -79,18 +79,18 @@ const Dashboard = ({ realTimeData }) => {
     }
   };
   const MetricCard = ({ title, value, unit, change, trend, className = "", children,content = "", onClick }) => (
-    <div 
-      className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
+    <div
+      className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-sm text-gray-500 font-medium">{title}</p>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{title}</p>
           <div className="flex items-baseline mt-4">
-            <span className="text-4xl font-bold text-gray-900">
+            <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
-            <span className="text-sm text-gray-500 ml-1">{unit}</span>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ml-1`}>{unit}</span>
           </div>
           {change && (
             <div className="flex items-center mt-2">
@@ -102,7 +102,7 @@ const Dashboard = ({ realTimeData }) => {
         </div>
         {children}
       </div>
-      <div className="text-sm text-gray-500 font-medium">{content}</div>
+      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{content}</div>
     </div>
   );
 
@@ -115,8 +115,8 @@ const Dashboard = ({ realTimeData }) => {
     ];
 
     return (
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">System Distribution</h3>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>System Distribution</h3>
         <div className="flex items-center justify-center mb-6">
           <div className="relative w-40 h-40">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -138,8 +138,8 @@ const Dashboard = ({ realTimeData }) => {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-4xl font-bold text-gray-900">{categories[0].percentage}%</span>
-              <span className="text-sm text-gray-500">Active</span>
+              <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{categories[0].percentage}%</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active</span>
             </div>
           </div>
         </div>
@@ -148,9 +148,9 @@ const Dashboard = ({ realTimeData }) => {
             <div key={index} className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
-                <span className="text-sm font-medium text-gray-700">{category.name}</span>
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{category.name}</span>
               </div>
-              <span className="text-sm font-bold text-gray-900">
+              <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {(category.value || 0).toFixed(1)} {category.name === 'SkySails WindSpeed' ? 'm/s' : category.name === 'ESS Battery' ? 'V' : 'kW'}
               </span>
             </div>
@@ -246,10 +246,14 @@ const Dashboard = ({ realTimeData }) => {
   };
 
   const EnergyCard = () => (
-    <div className="relative bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-6 text-white overflow-hidden">
+    <div className={`relative rounded-2xl p-6 text-white overflow-hidden ${
+      isDarkMode
+        ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 border border-indigo-800'
+        : 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'
+    }`}>
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
-      
+
       <div className="relative z-10">
         <div className="mb-8">
           <p className="text-sm opacity-80">Total System Power</p>
@@ -257,12 +261,12 @@ const Dashboard = ({ realTimeData }) => {
             {((realTimeData.skysails?.windSpeed || 0) * 100 + (realTimeData.ess?.pcs?.activePower || 0)).toFixed(0)} kW
           </p>
         </div>
-        
+
         <div className="mb-6">
           <p className="text-sm opacity-80">Energy Management System</p>
           <p className="font-mono">Station •••• •••• 2025</p>
         </div>
-        
+
         <div className="flex justify-end">
           <TrendingUp className="w-8 h-8" />
         </div>
@@ -273,7 +277,7 @@ const Dashboard = ({ realTimeData }) => {
   const WeatherCard = () => {
     if (loading) {
       return (
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
@@ -283,9 +287,9 @@ const Dashboard = ({ realTimeData }) => {
 
     if (!weatherData) {
       return (
-        <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-center h-40">
-            <div className="text-center text-gray-500">
+            <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <Cloud className="w-8 h-8 mx-auto mb-2" />
               <p>無法取得天氣資訊</p>
             </div>
@@ -295,16 +299,20 @@ const Dashboard = ({ realTimeData }) => {
     }
 
     return (
-      <div className="bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-sm border border-gray-100 relative overflow-hidden">
+      <div className={`rounded-2xl p-6 text-white shadow-sm border relative overflow-hidden ${
+        isDarkMode
+          ? 'bg-gradient-to-br from-sky-900 via-blue-900 to-blue-950 border-blue-800'
+          : 'bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 border-gray-100'
+      }`}>
         {/* 背景裝飾 */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
         <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
-        
+
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold">Weather conditions</h3>
-              <p className="text-blue-100 text-sm">{weatherData.location}</p>
+              <p className={`text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.location}</p>
             </div>
             <div className="flex items-center">
               <img 
@@ -320,33 +328,33 @@ const Dashboard = ({ realTimeData }) => {
               <span className="text-4xl font-bold">{weatherData.temperature.toFixed(1)}</span>
               <span className="text-lg ml-1">°C</span>
             </div>
-            <p className="text-blue-100 text-sm capitalize">{weatherData.description}</p>
+            <p className={`text-sm capitalize ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center space-x-2">
               <Wind className="w-4 h-4" />
               <div>
-                <p className="text-blue-100">風速</p>
+                <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風速</p>
                 <p className="font-semibold">{weatherData.windSpeed} m/s</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Navigation 
-                className="w-4 h-4" 
+              <Navigation
+                className="w-4 h-4"
                 style={{ transform: `rotate(${weatherData.windDeg || 0}deg)` }}
               />
               <div>
-                <p className="text-blue-100">風向</p>
+                <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風向</p>
                 <p className="font-semibold">{weatherData.windDir}</p>
               </div>
             </div>
             <div>
-              <p className="text-blue-100">濕度</p>
+              <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>濕度</p>
               <p className="font-semibold">{weatherData.humidity}%</p>
             </div>
             <div>
-              <p className="text-blue-100">氣壓</p>
+              <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>氣壓</p>
               <p className="font-semibold">{weatherData.pressure} hPa</p>
             </div>
           </div>
@@ -374,13 +382,13 @@ const Dashboard = ({ realTimeData }) => {
     ];
 
     return (
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300`}>
         <div className="mb-4">
-          <p className="text-sm text-gray-500 font-medium">系統連線</p>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>系統連線</p>
           <div className="flex items-baseline mt-4">
-            <span className="text-4xl font-bold text-gray-900">{onlineSystems}</span>
-            <span className="text-2xl text-gray-400 mx-1">/</span>
-            <span className="text-2xl text-gray-400">{totalSystems}</span>
+            <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{onlineSystems}</span>
+            <span className={`text-2xl ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mx-1`}>/</span>
+            <span className={`text-2xl ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{totalSystems}</span>
           </div>
           {/* <p className="text-xs text-gray-400 mt-1">部分離線</p> */}
         </div>

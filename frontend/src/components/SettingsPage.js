@@ -2,52 +2,52 @@ import React, { useState } from 'react';
 import { Settings, Save, MapPin, Network, Plus, Trash2, Edit, Eye, EyeOff } from 'lucide-react';
 
 // 獨立的彈出視窗組件（不使用 memo）
-const AddSiteModal = ({ onClose, onAdd, newSite, setNewSite }) => (
+const AddSiteModal = ({ onClose, onAdd, newSite, setNewSite, isDarkMode }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-semibold mb-4">新增案場</h3>
+    <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'} rounded-2xl p-6 w-full max-w-md mx-4 ${isDarkMode ? 'border' : ''}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>新增案場</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">案場名稱</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>案場名稱</label>
             <input
               type="text"
               value={newSite.name}
               onChange={(e) => setNewSite(prev => ({...prev, name: e.target.value}))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               placeholder="Site D"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">緯度</label>
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>緯度</label>
               <input
                 type="number"
                 step="0.0001"
                 value={newSite.lat}
                 onChange={(e) => setNewSite(prev => ({...prev, lat: e.target.value}))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                 placeholder="25.0330"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">經度</label>
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>經度</label>
               <input
                 type="number"
                 step="0.0001"
                 value={newSite.lng}
                 onChange={(e) => setNewSite(prev => ({...prev, lng: e.target.value}))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                 placeholder="121.5654"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">描述</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>描述</label>
             <input
               type="text"
               value={newSite.description}
               onChange={(e) => setNewSite(prev => ({...prev, description: e.target.value}))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               placeholder="案場描述"
             />
           </div>
@@ -55,7 +55,7 @@ const AddSiteModal = ({ onClose, onAdd, newSite, setNewSite }) => (
         <div className="flex justify-end space-x-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className={`px-4 py-2 ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
           >
             取消
           </button>
@@ -70,15 +70,15 @@ const AddSiteModal = ({ onClose, onAdd, newSite, setNewSite }) => (
     </div>
 );
 
-const ConfigSection = ({ title, category, hasPort = true, settings, setSettings }) => (
-  <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-    <h3 className="text-lg font-semibold mb-4 flex items-center">
-      <Network className="w-5 h-5 mr-2 text-blue-600" />
+const ConfigSection = ({ title, category, hasPort = true, settings, setSettings, isDarkMode }) => (
+  <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+    <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+      <Network className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
       {title}
     </h3>
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">IP Address</label>
+        <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>IP Address</label>
         <input
           type="text"
           value={settings[category]?.ip || ''}
@@ -89,13 +89,13 @@ const ConfigSection = ({ title, category, hasPort = true, settings, setSettings 
               ip: e.target.value
             }
           }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
           placeholder="192.168.1.xxx"
         />
       </div>
       {hasPort && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Port</label>
+          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Port</label>
           <input
             type="text"
             value={settings[category]?.port || ''}
@@ -106,7 +106,7 @@ const ConfigSection = ({ title, category, hasPort = true, settings, setSettings 
                 port: e.target.value
               }
             }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
             placeholder="8000"
           />
         </div>
@@ -115,7 +115,7 @@ const ConfigSection = ({ title, category, hasPort = true, settings, setSettings 
         <div className={`w-2 h-2 rounded-full ${
           settings[category]?.ip ? 'bg-green-500' : 'bg-gray-300'
         }`}></div>
-        <span className="text-gray-600">
+        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
           {settings[category]?.ip ? 'Configuration set' : 'Not configured'}
         </span>
       </div>
@@ -123,28 +123,31 @@ const ConfigSection = ({ title, category, hasPort = true, settings, setSettings 
   </div>
 );
 
-const NetworkSettings = ({ settings, setSettings, handleSaveSettings }) => (
+const NetworkSettings = ({ settings, setSettings, handleSaveSettings, isDarkMode }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <ConfigSection title="Overview" category="overview" hasPort={false} settings={settings} setSettings={setSettings} />
-      <ConfigSection title="SBMS" category="sbms" settings={settings} setSettings={setSettings} />
-      <ConfigSection title="PCS" category="pcs" settings={settings} setSettings={setSettings} />
-      <ConfigSection title="DIESEL" category="diesel" settings={settings} setSettings={setSettings} />
+      <ConfigSection title="Overview" category="overview" hasPort={false} settings={settings} setSettings={setSettings} isDarkMode={isDarkMode} />
+      <ConfigSection title="SBMS" category="sbms" settings={settings} setSettings={setSettings} isDarkMode={isDarkMode} />
+      <ConfigSection title="PCS" category="pcs" settings={settings} setSettings={setSettings} isDarkMode={isDarkMode} />
+      <ConfigSection title="DIESEL" category="diesel" settings={settings} setSettings={setSettings} isDarkMode={isDarkMode} />
     </div>
-    
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <ConfigSection title="PN14" category="pn14" settings={settings} setSettings={setSettings} />
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-4">網路測試</h3>
+      <ConfigSection title="PN14" category="pn14" settings={settings} setSettings={setSettings} isDarkMode={isDarkMode} />
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border flex flex-col`}>
+        <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+          <Network className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+          網路測試
+        </h3>
         <div className="space-y-3">
           {Object.entries(settings).map(([key, config]) => (
-            <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span className="font-medium capitalize">{key}</span>
+            <div key={key} className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+              <span className={`font-medium capitalize ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{key}</span>
               <div className="flex items-center space-x-2">
                 <div className={`w-2 h-2 rounded-full ${
                   config.ip ? 'bg-green-500' : 'bg-red-500'
                 }`}></div>
-                <span className="text-sm text-gray-600">
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   {config.ip ? 'Connected' : 'Disconnected'}
                 </span>
               </div>
@@ -166,7 +169,7 @@ const NetworkSettings = ({ settings, setSettings, handleSaveSettings }) => (
   </div>
 );
 
-const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
+const SettingsPage = ({ currentSite, setCurrentSite, apiRequest, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState('network');
   const [showPassword, setShowPassword] = useState(false);
   const [newSite, setNewSite] = useState({ name: '', lat: '', lng: '', description: '' });
@@ -355,10 +358,10 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
   const SiteMap = React.memo(() => (
     <div className="space-y-6">
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold flex items-center">
-            <MapPin className="w-5 h-5 mr-2 text-green-600" />
+          <h3 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+            <MapPin className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
             案場地圖設定
           </h3>
           <button
@@ -372,19 +375,19 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
         {/* 案場列表 */}
         <div className="space-y-4">
-          <h4 className="font-medium text-gray-900">案場列表</h4>
+          <h4 className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>案場列表</h4>
           <div className="grid grid-cols-1 gap-4">
             {sites.map((site) => (
-              <div key={site.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={site.id} className={`flex items-center justify-between p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
                 <div className="flex items-center space-x-4">
                   <div className={`w-3 h-3 rounded-full ${
                     site.status === 'active' ? 'bg-green-500' :
                     site.status === 'maintenance' ? 'bg-yellow-500' : 'bg-red-500'
                   }`}></div>
                   <div>
-                    <h5 className="font-medium text-gray-900">{site.name}</h5>
-                    <p className="text-sm text-gray-600">{site.description}</p>
-                    <p className="text-xs text-gray-500">
+                    <h5 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{site.name}</h5>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{site.description}</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                       座標: {site.lat.toFixed(4)}, {site.lng.toFixed(4)}
                     </p>
                   </div>
@@ -393,16 +396,18 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
                   <button
                     onClick={() => handleSwitchSite(site.name)}
                     className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                      currentSite === site.name 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      currentSite === site.name
+                        ? 'bg-blue-100 text-blue-700'
+                        : isDarkMode
+                          ? 'bg-gray-600 text-gray-200 hover:bg-gray-500'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {currentSite === site.name ? '目前案場' : '切換'}
                   </button>
                   <button
                     onClick={() => handleDeleteSite(site.id)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    className={`p-2 text-red-500 ${isDarkMode ? 'hover:bg-red-900/30' : 'hover:bg-red-50'} rounded-lg transition-colors`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -417,13 +422,13 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
   const SystemSettings = () => (
     <div className="space-y-6">
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">系統偏好設定</h3>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>系統偏好設定</h3>
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">資料更新頻率</label>
-            <select 
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>資料更新頻率</label>
+            <select
+              className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               defaultValue="3"
             >
               <option value="1">1 秒</option>
@@ -432,11 +437,11 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
               <option value="10">10 秒</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">語言設定</label>
-            <select 
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>語言設定</label>
+            <select
+              className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               defaultValue="zh-TW"
             >
               <option value="zh-TW">繁體中文</option>
@@ -444,30 +449,30 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
               <option value="en">English</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">時區設定</label>
-            <select 
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>時區設定</label>
+            <select
+              className={`w-full px-3 py-2 border ${isDarkMode ? 'border-gray-600 bg-gray-700 text-gray-200' : 'border-gray-300 bg-white text-gray-900'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               defaultValue="Asia/Taipei"
             >
               <option value="Asia/Taipei">Asia/Taipei (UTC+8)</option>
               <option value="UTC">UTC (UTC+0)</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">主題設定</label>
+            <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>主題設定</label>
             <div className="flex space-x-4">
-              <label className="flex items-center">
+              <label className={`flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                 <input type="radio" name="theme" value="light" defaultChecked className="mr-2" />
                 <span>淺色主題</span>
               </label>
-              <label className="flex items-center">
+              <label className={`flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                 <input type="radio" name="theme" value="dark" className="mr-2" />
                 <span>深色主題</span>
               </label>
-              <label className="flex items-center">
+              <label className={`flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
                 <input type="radio" name="theme" value="auto" className="mr-2" />
                 <span>自動</span>
               </label>
@@ -476,27 +481,27 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
         </div>
       </div>
 
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">告警設定</h3>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>告警設定</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="font-medium">電子郵件通知</span>
+          <div className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>電子郵件通知</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
-          
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="font-medium">SMS 簡訊通知</span>
+
+          <div className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>SMS 簡訊通知</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
-          
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <span className="font-medium">系統聲音提醒</span>
+
+          <div className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>系統聲音提醒</span>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" defaultChecked />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -505,20 +510,20 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
         </div>
       </div>
 
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">資料備份</h3>
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>資料備份</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className={`flex items-center justify-between p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
             <div>
-              <p className="font-medium">自動備份</p>
-              <p className="text-sm text-gray-600">每日自動備份系統資料</p>
+              <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>自動備份</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>每日自動備份系統資料</p>
             </div>
             <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               立即備份
             </button>
           </div>
-          
-          <div className="text-sm text-gray-600">
+
+          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <p>上次備份時間: 2025-08-12 02:00:00</p>
             <p>備份檔案大小: 25.6 MB</p>
           </div>
@@ -536,11 +541,11 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'network':
-        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />;
+        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} isDarkMode={isDarkMode} />;
       case 'sitemap':
         return <SiteMap />;
       default:
-        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} />;
+        return <NetworkSettings settings={settings} setSettings={setSettings} handleSaveSettings={handleSaveSettings} isDarkMode={isDarkMode} />;
     }
   };
 
@@ -552,23 +557,27 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
       </div>
 
       {/* 標籤頁導航 */}
-      <div className="bg-white/70 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex border-b border-gray-200">
+      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl shadow-sm border overflow-hidden`}>
+        <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-4 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-purple-50 text-purple-700 border-b-2 border-purple-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? isDarkMode
+                    ? 'bg-purple-900/50 text-purple-300 border-b-2 border-purple-500'
+                    : 'bg-purple-50 text-purple-700 border-b-2 border-purple-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               {tab.label}
             </button>
           ))}
         </div>
-        
+
         <div className="p-6">
           {renderActiveComponent()}
         </div>
@@ -576,11 +585,12 @@ const SettingsPage = ({ currentSite, setCurrentSite, apiRequest }) => {
 
       {/* 新增案場表單 - 放在最外層並條件渲染 */}
       {activeTab === 'sitemap' && isAddingSite && (
-        <AddSiteModal 
+        <AddSiteModal
           onClose={() => setIsAddingSite(false)}
           onAdd={handleAddSite}
           newSite={newSite}
           setNewSite={setNewSite}
+          isDarkMode={isDarkMode}
         />
       )}
     </div>

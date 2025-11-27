@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 import { Wind, Activity, Gauge, TrendingUp, Power, AlertTriangle, CheckCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const SkySails = ({ realTimeData, setRealTimeData }) => {
+const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
   const [chartTimeRange, setChartTimeRange] = useState('1h');
-  
+
   const skysailsData = realTimeData.skysails;
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, trend, subtitle, className = "" }) => (
-    <div className={`bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 ${className}`}>
+    <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${className}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-50 rounded-lg">
-            <Icon className="w-5 h-5 text-blue-600" />
+          <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg`}>
+            <Icon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{title}</h3>
-            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+            <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h3>
+            {subtitle && <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{subtitle}</p>}
           </div>
         </div>
         {status && (
@@ -33,10 +33,10 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
       <div className="flex items-end justify-between">
         <div>
           <div className="flex items-baseline space-x-1">
-            <span className="text-4xl font-bold text-gray-900">
+            <span className={`text-4xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
-            <span className="text-sm text-gray-500">{unit}</span>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{unit}</span>
           </div>
           {trend && (
             <div className="flex items-center mt-1">
@@ -72,18 +72,22 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
   const chartData = generateChartData();
 
   const WindSpeedChart = () => (
-    <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
+    <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold">Wind Speed Trend</h3>
+        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Wind Speed Trend</h3>
         <div className="flex space-x-2">
           {['1h', '24h', '7d'].map((range) => (
             <button
               key={range}
               onClick={() => setChartTimeRange(range)}
               className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                chartTimeRange === range 
-                  ? 'bg-blue-100 text-blue-700' 
-                  : 'text-gray-500 hover:bg-gray-100'
+                chartTimeRange === range
+                  ? isDarkMode
+                    ? 'bg-blue-900/50 text-blue-300'
+                    : 'bg-blue-100 text-blue-700'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-gray-700'
+                    : 'text-gray-500 hover:bg-gray-100'
               }`}
             >
               {range}
@@ -95,38 +99,39 @@ const SkySails = ({ realTimeData, setRealTimeData }) => {
       <div className="h-64 relative">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-            <XAxis 
-              dataKey="time" 
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#f3f4f6'} />
+            <XAxis
+              dataKey="time"
               axisLine={true}
               tickLine={false}
-              tick={{ fontSize: 10, fill: '#6b7280' }}
+              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
             />
             {/* 左側 Y 軸 - 風速 */}
-            <YAxis 
+            <YAxis
               yAxisId="left"
               domain={[0, 25]}
               axisLine={true}
               tickLine={false}
-              tick={{ fontSize: 10, fill: '#6b7280' }}
-              label={{ value: '風速 (m/s)', angle: -90, position: 'insideLeft' }}
+              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
+              label={{ value: '風速 (m/s)', angle: -90, position: 'insideLeft', fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
             />
             {/* 右側 Y 軸 - 功率 */}
-            <YAxis 
+            <YAxis
               yAxisId="right"
               orientation="right"
               domain={[0, 100]}
               axisLine={true}
               tickLine={false}
-              tick={{ fontSize: 10, fill: '#6b7280' }}
-              label={{ value: '功率 (kW)', angle: 90, position: 'insideRight' }}
+              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
+              label={{ value: '功率 (kW)', angle: 90, position: 'insideRight', fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #e5e7eb',
+            <Tooltip
+              contentStyle={{
+                backgroundColor: isDarkMode ? '#1f2937' : 'white',
+                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
                 borderRadius: '8px',
-                fontSize: '12px'
+                fontSize: '12px',
+                color: isDarkMode ? '#e5e7eb' : '#000000'
               }}
             />
             {/* 風速線 - 使用左側 Y 軸 */}

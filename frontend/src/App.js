@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, Battery, Zap, Fuel,RotateCw , AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, BarChart3, Gauge, Menu, X, User, Search, Bell, FileText } from 'lucide-react';
+import { Wind, Battery, Zap, Fuel,RotateCw , AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, BarChart3, Gauge, Menu, X, User, Search, Bell, FileText, Moon, Sun } from 'lucide-react';
 import { PublicClientApplication } from '@azure/msal-browser';
 
 // 導入各個頁面組件
@@ -18,6 +18,7 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -272,7 +273,7 @@ const App = () => {
               frequency: data.devices.diesel?.frequency || 0,
               oilPressure: data.devices.diesel?.oilpressure || 0,
               coolantTemp: data.devices.diesel?.coolertemperature || 0,
-              fuel: data.devices.diesel?.fuel || 0
+              fuel: data.devices.diesel?.fuel || 'N/A'
             },
             power: {
               l1Power: data.devices.diesel?.l1power || 0,
@@ -466,7 +467,8 @@ const App = () => {
       setIsLoading,
       currentSite,
       setCurrentSite,
-      handleCommandExecute
+      handleCommandExecute,
+      isDarkMode
     };
 
     switch (selectedCategory) {
@@ -479,10 +481,11 @@ const App = () => {
       case 'ess':
         return <ESSBattery {...props} />;
       case 'diesel':
-        return <DieselGen 
+        return <DieselGen
           realTimeData={realTimeData}
           setRealTimeData={setRealTimeData}
           onCommandExecute={handleCommandExecute}
+          isDarkMode={isDarkMode}
         />;
       case 'settings':
         return <SettingsPage {...props} />;
@@ -503,21 +506,44 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent">
+    <div
+      className="min-h-screen"
+      style={isDarkMode ? {
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        // filter: 'brightness(0.4)',
+      } : {}}
+    >
       <ErrorMessage />
       <LoadingOverlay />
 
       <div className="flex h-screen">
         {/* 側邊欄 - 固定高度，獨立滾動 */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-56 bg-gradient-to-b from-slate-950 to-indigo-700 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
+        <div className={`fixed inset-y-0 left-0 z-50 w-56 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col relative overflow-hidden ${
+          isDarkMode ? '' : 'bg-gradient-to-b from-slate-950 to-indigo-700'
+        }`}>
+          {/* 夜間模式的背景圖片層 */}
+          {isDarkMode && (
+            <div
+              className="absolute inset-0 -z-10"
+              style={{
+                backgroundImage: `url('/images/skysails-bg.jpg')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'brightness(0.4)',
+              }}
+            />
+          )}
           {/* 頂部標題區域 - 固定不滾動 */}
-          <div className="flex items-center justify-between p-6 border-b border-indigo-700 flex-shrink-0">
+          <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${
+            isDarkMode ? 'border-gray-700/50' : 'border-indigo-700'
+          }`}>
             <div className="flex items-center space-x-3">
               <div>
                 <h1 className="text-lg font-bold text-white mb-3">
                   <img src="\images\aisails-logo.png" className="w-25 h-8" alt="AiSails Logo" />
                 </h1>
-                <p className="text-xs text-indigo-200">{currentSite}</p>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-indigo-200'}`}>{currentSite}</p>
               </div>
             </div>
             <button
@@ -562,10 +588,11 @@ const App = () => {
                         setSelectedCategory(item.id);
                         setIsSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${selectedCategory === item.id
-                          ? 'bg-white bg-opacity-20 text-white shadow-lg'
-                          : 'text-indigo-200 hover:bg-white hover:bg-opacity-10 hover:text-white'
-                        }`}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                        selectedCategory === item.id
+                          ? `${isDarkMode ? 'bg-gray-800' : 'bg-white bg-opacity-20'} text-white shadow-lg`
+                          : `${isDarkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-indigo-200 hover:bg-white hover:bg-opacity-10'} hover:text-white`
+                      }`}
                     >
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.label}</span>
@@ -585,11 +612,11 @@ const App = () => {
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="lg:hidden text-gray-600 hover:text-gray-900"
+                  className={`lg:hidden ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'}`}
                 >
                   <Menu className="w-6 h-6" />
                 </button>
-                <h2 className="text-2xl font-bold text-gray-900 capitalize">
+                <h2 className={`text-2xl font-bold capitalize ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {selectedCategory === 'skysails' ? 'SkySails PN14' :
                     selectedCategory === 'ess' ? 'ESS Battery' :
                       selectedCategory === 'diesel' ? 'Diesel Generator' :
@@ -605,12 +632,23 @@ const App = () => {
               <div className="flex items-center space-x-4">
                 <button
                   onClick={fetchAllSystemData}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                   title="Refresh data"
                 >
-                  <RotateCw className={`w-5 h-5 text-gray-500 ${isLoading ? 'animate-spin' : ''}`} />
+                  <RotateCw className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} ${isLoading ? 'animate-spin' : ''}`} />
                 </button>
-                <Bell className="w-5 h-5 text-gray-500" />
+                <button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                  title={isDarkMode ? '切換至日間模式' : '切換至夜間模式'}
+                >
+                  {isDarkMode ? (
+                    <Sun className="w-5 h-5 text-yellow-400" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-gray-800" />
+                  )}
+                </button>
+                <Bell className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} />
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
@@ -618,13 +656,13 @@ const App = () => {
                   <div className="hidden md:block">
                     {isAuthenticated && currentUser ? (
                       <>
-                        <p className="text-sm font-semibold text-gray-900">{currentUser.name || currentUser.username}</p>
-                        <p className="text-xs text-gray-500">已驗證</p>
+                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name || currentUser.username}</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>已驗證</p>
                       </>
                     ) : (
                       <>
-                        <p className="text-sm font-semibold text-gray-900">Energy Manager</p>
-                        <p className="text-xs text-gray-500">未驗證</p>
+                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Energy Manager</p>
+                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>未驗證</p>
                       </>
                     )}
                   </div>
@@ -635,35 +673,43 @@ const App = () => {
 
           {/* 主內容區域 - 單一滾動容器，美化滾動條 */}
           <main
-            className={`flex-1 ${selectedCategory === 'etica' ? 'p-0' : 'p-4 lg:p-8'}`}
+            className={`flex-1 ${selectedCategory === 'etica' ? 'p-0' : 'p-4 lg:p-8'} relative overflow-hidden`}
             style={{
-              backgroundImage: `url('/images/skysails-bg.jpg')`,
-              backgroundSize: 'auto 1500px',
-              backgroundRepeat: 'repeat-x',
-              backgroundPosition: 'center',
-              backgroundAttachment: 'fixed',
-              // minHeight: 'calc(100vh - 70px)',
               overflowY: 'auto',
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(79, 70, 229, 0.3) transparent'
+
+              scrollbarColor: isDarkMode ? 'rgba(156, 163, 175, 0.3) transparent' : 'rgba(79, 70, 229, 0.3) transparent'
             }}
           >
+            {/* 背景圖片層 */}
+            <div
+              className="fixed inset-0 -z-10"
+              style={{
+                              backgroundImage: `url('/images/skysails-bg.jpg')`,
+                backgroundSize: 'auto 100%',
+                backgroundPosition: 'center center',
+                backgroundRepeat: 'repeat-x',
+                backgroundAttachment: 'fixed',
+                filter: isDarkMode ? 'brightness(0.4)' : 'brightness(1)',
+                transition: 'filter 0.3s ease',
+              }}
+            />
             <style>
               {`
                 main::-webkit-scrollbar {
                   width: 8px;
                 }
                 main::-webkit-scrollbar-track {
-                  background: rgba(255, 255, 255, 0.1);
+                  background: ${isDarkMode ? 'rgba(31, 41, 55, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
                   border-radius: 4px;
                 }
                 main::-webkit-scrollbar-thumb {
-                  background: rgba(79, 70, 229, 0.3);
+                  background: ${isDarkMode ? 'rgba(156, 163, 175, 0.3)' : 'rgba(79, 70, 229, 0.3)'};
                   border-radius: 4px;
                   transition: all 0.3s ease;
                 }
                 main::-webkit-scrollbar-thumb:hover {
-                  background: rgba(79, 70, 229, 0.5);
+                  background: ${isDarkMode ? 'rgba(156, 163, 175, 0.5)' : 'rgba(79, 70, 229, 0.5)'};
                 }
               `}
             </style>
