@@ -84,7 +84,7 @@ const App = () => {
         zone_high: 60.02, // 頻率高警戒值
         zone_low: 59.9 // 頻率低警戒值
         },
-        gridStatus: 'Grid Disconnected',  // pcs.gridstatus 微電網狀態
+        gridStatus: 'N/A',  // pcs.gridstatus 微電網狀態
         ip: "192.168.127.231", // PCS設備位置
         lineFrequency: 0,  // pcs.linefrequency 偵測頻率
         lineVoltage: 0,  // pcs.linevoltage 偵測電壓
@@ -103,6 +103,7 @@ const App = () => {
         started: false,
         mode: 0,  // diesel.status (includes 'Auto') ? 0 : 1
         acb: 0,  // diesel.status (includes 'OFF') ? 0 : 1
+        manual_mode: false, // diesel.status.manual_mode === true ? "手動" : "自動"
         frequency: 0,  // diesel.frequency
         oilPressure: 0,  // diesel.oilpressure
         coolantTemp: 0,  // diesel.coolertemperature
@@ -256,7 +257,7 @@ const App = () => {
               power: data.devices.pcs?.power || 0,
               operatingMode: data.devices.pcs?.operationmode|| 'N/A',
               pcsStatus: data.devices.pcs?.pcsstatus === 1 ? 'charging' : 'standby',
-              gridStatus: data.devices.pcs?.gridstatus === 1 ? 'Grid Connected' : 'Grid Disconnected',
+              gridStatus: data.devices.pcs?.gridstatus || 'N/A',
               supplyFrequency: data.devices.pcs?.supplyfrequency || 0,
               fault: data.devices.pcs?.fault || 'Not found',
               lineVoltage: data.devices.pcs?.linevoltage || 0,
@@ -268,7 +269,8 @@ const App = () => {
             engineSwitch: data.devices.diesel?.started || false,
             status: {
               started: data.devices.diesel?.started || false,
-              mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
+              // mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
+              manual_mode: data.devices.diesel?.manual_mode === true ? "手動" : "自動3",
               acb: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
               frequency: data.devices.diesel?.frequency || 0,
               oilPressure: data.devices.diesel?.oilpressure || 0,

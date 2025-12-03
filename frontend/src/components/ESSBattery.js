@@ -553,7 +553,7 @@ const toggleEdit = async (key) => {
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>故障狀態</span>
-              <span className={`font-medium ${essData.pcs.fault === 'Not found' ?'text-red-600':'text-green-600'}`}>
+              <span className={`font-medium ${essData.pcs.fault === 'Not found' ?'text-green-600':'text-red-600'}`}>
                 {essData.pcs.fault || 'Not found'}
               </span>
             </div>

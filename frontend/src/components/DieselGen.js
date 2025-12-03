@@ -178,15 +178,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           field="fuel"
         />
       </div>
-      <div className={`mt-6 p-4 ${isDarkMode ? 'bg-green-900/30 border-green-700' : 'bg-green-50 border-green-400'} rounded-lg border-l-4`}>
-        <div className="flex items-center space-x-3">
-          <CheckCircle className={`w-5 h-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
-          <div>
-            <p className={`font-medium ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>柴油發電機組待機就緒</p>
-            <p className={`text-sm ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>所有系統正常，可隨時啟動</p>
-          </div>
-        </div>
-      </div>
+      
       <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
         <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>發電機狀態監控</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
@@ -194,12 +186,12 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
             <h4 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-3`}>運行狀態</h4>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>啟動模式</span>
-              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{dieselData.status.mode === 0 ? '自動' : '手動'}</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{dieselData.status.manual_mode}</span>
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>主機狀態</span>
-              <span className={`font-medium ${dieselData.status.engineSwitch === false ? 'text-blue-600' : 'text-green-600'}`}>
-                {dieselData.status.engineSwitch === false ? '停止' : '運行'}
+              <span className={`font-medium ${dieselData.status.started === false ? 'text-blue-600' : 'text-green-600'}`}>
+                {dieselData.status.started === false ? '停止' : '運行'}
               </span>
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
@@ -334,7 +326,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
             <div className={`flex justify-between items-center p-4 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>總有效功率</span>
               <span className="font-bold text-2xl text-green-600">
-                {(dieselData.power.l1Power + dieselData.power.l2Power + dieselData.power.l3Power)} kW
+                {(dieselData.other.power)} kW
               </span>
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>

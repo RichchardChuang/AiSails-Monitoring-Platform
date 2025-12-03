@@ -274,6 +274,64 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
     </div>
   );
 
+  // 根據風速返回對應的背景顏色漸層
+  const getWindSpeedGradient = (windSpeed) => {
+    // 根據圖片的風速色階，定義顏色區間
+    if (windSpeed >= 29) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900'
+        : 'bg-gradient-to-br from-purple-600 via-purple-500 to-purple-700'; // 29+ m/s 深紫色
+    } else if (windSpeed >= 27) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-fuchsia-900 via-fuchsia-800 to-pink-900'
+        : 'bg-gradient-to-br from-fuchsia-500 via-fuchsia-400 to-pink-500'; // 27-29 m/s 桃紅色
+    } else if (windSpeed >= 24) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-red-900 via-red-800 to-red-900'
+        : 'bg-gradient-to-br from-red-600 via-red-500 to-red-700'; // 24-27 m/s 紅色
+    } else if (windSpeed >= 20) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-orange-900 via-orange-800 to-orange-900'
+        : 'bg-gradient-to-br from-orange-500 via-orange-400 to-orange-600'; // 20-24 m/s 橙色
+    } else if (windSpeed >= 18) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-amber-800 via-amber-700 to-yellow-800'
+        : 'bg-gradient-to-br from-amber-700 via-amber-600 to-yellow-700'; // 18-20 m/s 琥珀黃色（更深）
+    } else if (windSpeed >= 14) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-yellow-800 via-yellow-700 to-lime-800'
+        : 'bg-gradient-to-br from-yellow-700 via-yellow-600 to-lime-700'; // 14-18 m/s 黃綠色（更深）
+    } else if (windSpeed >= 12) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-lime-800 via-lime-700 to-green-800'
+        : 'bg-gradient-to-br from-lime-700 via-lime-600 to-green-700'; // 12-14 m/s 淺綠色（更深）
+    } else if (windSpeed >= 10) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-green-800 via-green-700 to-emerald-800'
+        : 'bg-gradient-to-br from-green-400 via-green-300 to-emerald-400'; // 10-12 m/s 綠色
+    } else if (windSpeed >= 8) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-emerald-800 via-teal-800 to-cyan-800'
+        : 'bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-400'; // 8-10 m/s 青綠色
+    } else if (windSpeed >= 6) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-cyan-800 via-cyan-700 to-sky-800'
+        : 'bg-gradient-to-br from-cyan-400 via-cyan-300 to-sky-400'; // 6-8 m/s 青色
+    } else if (windSpeed >= 4) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-sky-800 via-sky-700 to-blue-800'
+        : 'bg-gradient-to-br from-sky-400 via-sky-300 to-blue-400'; // 4-6 m/s 天藍色
+    } else if (windSpeed >= 2) {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900'
+        : 'bg-gradient-to-br from-blue-500 via-blue-400 to-blue-600'; // 2-4 m/s 藍色
+    } else {
+      return isDarkMode
+        ? 'bg-gradient-to-br from-indigo-900 via-blue-900 to-blue-950'
+        : 'bg-gradient-to-br from-indigo-500 via-blue-500 to-blue-700'; // 0-2 m/s 深藍色
+    }
+  };
+
   const WeatherCard = () => {
     if (loading) {
       return (
@@ -298,11 +356,12 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
       );
     }
 
+    // 根據風速動態設置背景顏色
+    const windSpeedGradient = getWindSpeedGradient(weatherData.windSpeed);
+
     return (
-      <div className={`rounded-2xl p-6 text-white shadow-sm border relative overflow-hidden ${
-        isDarkMode
-          ? 'bg-gradient-to-br from-sky-900 via-blue-900 to-blue-950 border-blue-800'
-          : 'bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600 border-gray-100'
+      <div className={`rounded-2xl p-6 text-white shadow-sm border relative overflow-hidden transition-all duration-700 ${windSpeedGradient} ${
+        isDarkMode ? 'border-gray-700' : 'border-gray-100'
       }`}>
         {/* 背景裝飾 */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-12 translate-x-12"></div>
