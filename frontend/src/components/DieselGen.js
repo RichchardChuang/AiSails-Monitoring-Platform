@@ -4,6 +4,8 @@ import { Fuel, Zap, Thermometer, Gauge, Activity, Power, Settings, AlertTriangle
 const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState('status');
   const [isExecuting, setIsExecuting] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const dieselData = realTimeData.diesel;
 
@@ -48,11 +50,25 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
     }
   };
 
-  const toggleDieselEngine = async () => {
+  // 顯示確認對話框
+  const handleDieselToggleClick = () => {
     const newState = !dieselData.engineSwitch;
-    const action = newState ? 'start_dg' : 'stop_dg';
-    const description = newState ? '柴油發電機啟動' : '柴油發電機停止';
-    
+    setPendingAction({
+      newState,
+      action: newState ? 'start_dg' : 'stop_dg',
+      description: newState ? '柴油發電機啟動' : '柴油發電機停止',
+      message: newState ? '確定要啟動柴油發電機嗎？' : '確定要停止柴油發電機嗎？'
+    });
+    setShowConfirmDialog(true);
+  };
+
+  // 確認後執行
+  const confirmToggleDieselEngine = async () => {
+    if (!pendingAction) return;
+
+    setShowConfirmDialog(false);
+    const { newState, action, description } = pendingAction;
+
     // 立即更新 UI 狀態（樂觀更新）
     setRealTimeData(prev => ({
       ...prev,
@@ -66,10 +82,10 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
         }
       }
     }));
-    
+
     // 在背景發送命令到後端
     const success = await sendCommand('diesel', action, description);
-    
+
     // 如果失敗則還原狀態
     if (!success) {
       setRealTimeData(prev => ({
@@ -85,6 +101,14 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
         }
       }));
     }
+
+    setPendingAction(null);
+  };
+
+  // 取消操作
+  const cancelToggleDieselEngine = () => {
+    setShowConfirmDialog(false);
+    setPendingAction(null);
   };
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, className = "", isSwitch = false, onToggle, category = "", field = "" }) => (
@@ -583,7 +607,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
             icon={Power}
             status={(dieselData.engineSwitch === true) ? 'running' : 'standby'}
             isSwitch={true}
-            onToggle={toggleDieselEngine}
+            onToggle={handleDieselToggleClick}
             className="border-2 shadow-lg"
           />
         </div>
@@ -638,6 +662,47 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           <ActiveComponent />
         </div>
       </div>
+
+      {/* 確認對話框 */}
+      {showConfirmDialog && pendingAction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-2xl p-6 shadow-2xl border max-w-md w-full mx-4`}>
+            <div className="flex items-center space-x-3 mb-4">
+              <AlertTriangle className={`w-6 h-6 ${pendingAction.newState ? 'text-green-500' : 'text-orange-500'}`} />
+              <h3 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>確認操作</h3>
+            </div>
+
+            <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {pendingAction.message}
+            </p>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={cancelToggleDieselEngine}
+                disabled={isExecuting}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmToggleDieselEngine}
+                disabled={isExecuting}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium text-white transition-colors ${
+                  pendingAction.newState
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-orange-600 hover:bg-orange-700'
+                } ${isExecuting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isExecuting ? '執行中...' : '確認'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

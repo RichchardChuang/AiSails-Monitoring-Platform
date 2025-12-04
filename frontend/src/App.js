@@ -370,12 +370,21 @@ const App = () => {
 
   // 模擬實時數據更新
   useEffect(() => {
-    fetchAllSystemData().catch(() => {
-      console.log('API not available, using simulated data');
-    });
+    // 初始載入時不顯示 loading overlay，靜默載入
+    const initialFetch = async () => {
+      try {
+        await fetchDeviceStatus();
+      } catch (err) {
+        console.log('API not available, using simulated data');
+      }
+    };
 
+    initialFetch();
+
+    // 定時靜默更新（不顯示 loading overlay）
     const interval = setInterval(() => {
-      fetchAllSystemData().catch(() => {
+      // 直接呼叫 fetchDeviceStatus，不經過 fetchAllSystemData
+      fetchDeviceStatus().catch(() => {
         // 模擬數據更新
         setRealTimeData(prev => ({
           ...prev,
@@ -401,7 +410,7 @@ const App = () => {
           }
         }));
       });
-    }, 300000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -517,11 +526,17 @@ const App = () => {
       } : {}}
     >
       <ErrorMessage />
-      <LoadingOverlay />
+      {/* <LoadingOverlay /> */}
 
       <div className="flex h-screen">
         {/* 側邊欄 - 固定高度，獨立滾動 */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-56 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col relative overflow-hidden ${
+        {/*
+          響應式寬度設計：
+          - < 500px: 完全隱藏，透過漢堡選單開關 (fixed + transform，不佔空間)
+          - 500px ~ 1024px: 只顯示圖示，不顯示文字 (w-16, sticky)
+          - >= 1024px: 完整顯示圖示和文字 (w-56, sticky)
+        */}
+        <div className={`max-[499px]:fixed max-[499px]:inset-y-0 max-[499px]:left-0 max-[499px]:z-50 max-[499px]:w-56 flex-shrink-0 transform ${isSidebarOpen ? 'translate-x-0' : 'max-[499px]:-translate-x-full'} transition-all duration-300 ease-in-out min-[500px]:translate-x-0 min-[500px]:sticky min-[500px]:top-0 min-[500px]:h-screen min-[500px]:w-16 lg:w-56 flex flex-col relative overflow-hidden ${
           isDarkMode ? '' : 'bg-gradient-to-b from-slate-950 to-indigo-700'
         }`}>
           {/* 夜間模式的背景圖片層 */}
@@ -537,20 +552,32 @@ const App = () => {
             />
           )}
           {/* 頂部標題區域 - 固定不滾動 */}
-          <div className={`flex items-center justify-between p-6 border-b flex-shrink-0 ${
+          <div className={`flex items-center justify-center border-b flex-shrink-0 ${
             isDarkMode ? 'border-gray-700/50' : 'border-indigo-700'
-          }`}>
-            <div className="flex items-center space-x-3">
-              <div>
+          } ${isSidebarOpen ? 'p-6' : 'py-4 px-2 min-[500px]:px-2 lg:p-6'}`}>
+            <div className="flex items-center justify-center w-full">
+              {/* 完整 Logo - 大螢幕顯示 */}
+              <div className="hidden lg:block w-full">
                 <h1 className="text-lg font-bold text-white mb-3">
                   <img src="\images\aisails-logo.png" className="w-25 h-8" alt="AiSails Logo" />
                 </h1>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-indigo-200'}`}>{currentSite}</p>
               </div>
+
+              {/* 中等螢幕 - 顯示縮小的 Logo */}
+              <div className="hidden min-[500px]:flex lg:hidden items-center justify-center">
+                <img src="\images\aisails-logo.png" className="h-6 w-auto" alt="AiSails Logo" />
+              </div>
+
+              {/* 小螢幕 - 顯示小 Logo（漢堡選單打開時） */}
+              <div className={`min-[500px]:hidden flex items-center justify-center ${!isSidebarOpen && 'hidden'}`}>
+                <img src="\images\aisails-logo.png" className="h-6 w-auto" alt="AiSails Logo" />
+              </div>
             </div>
+
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1"
+              className="min-[500px]:hidden text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-1 absolute right-2 top-4"
             >
               <X className="w-5 h-5" />
             </button>
@@ -590,14 +617,15 @@ const App = () => {
                         setSelectedCategory(item.id);
                         setIsSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
+                      className={`w-full flex items-center min-[500px]:justify-center lg:justify-start space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                         selectedCategory === item.id
                           ? `${isDarkMode ? 'bg-gray-800' : 'bg-white bg-opacity-20'} text-white shadow-lg`
                           : `${isDarkMode ? 'text-gray-400 hover:bg-gray-800' : 'text-indigo-200 hover:bg-white hover:bg-opacity-10'} hover:text-white`
                       }`}
+                      title={item.label}
                     >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-medium max-[499px]:inline min-[500px]:hidden lg:inline">{item.label}</span>
                     </button>
                   </li>
                 );
@@ -607,18 +635,19 @@ const App = () => {
         </div>
 
         {/* 主要內容區域 - 左邊留出側邊欄空間，移除多重滾動 */}
-        <div className="flex-1 lg:ml-0 flex flex-col h-screen">
+        <div className="flex-1 min-w-0 flex flex-col h-screen">
           {/* 頂部導航 - 固定不滾動 */}
-          <header className="bg-blue-/70 shadow-sm border-b border-gray-200 px-4 lg:px-8 py-4 flex-shrink-0">
+          <header className="bg-blue-/70 shadow-sm border-b border-gray-200 px-2 sm:px-4 lg:px-8 py-3 sm:py-4 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                {/* 漢堡選單只在 < 500px 顯示 */}
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className={`lg:hidden ${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-900'}`}
+                  className={`min-[500px]:hidden ${isDarkMode ? 'text-gray-300 hover:text-gray-500' : 'text-gray-800 hover:text-gray-900'}`}
                 >
-                  <Menu className="w-6 h-6" />
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
-                <h2 className={`text-2xl font-bold capitalize ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                <h2 className={`text-lg sm:text-xl lg:text-2xl font-bold capitalize ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                   {selectedCategory === 'skysails' ? 'SkySails PN14' :
                     selectedCategory === 'ess' ? 'ESS Battery' :
                       selectedCategory === 'diesel' ? 'Diesel Generator' :
@@ -631,27 +660,27 @@ const App = () => {
                   </span>
                 )}
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
                 <button
                   onClick={fetchAllSystemData}
-                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                   title="Refresh data"
                 >
-                  <RotateCw className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} ${isLoading ? 'animate-spin' : ''}`} />
+                  <RotateCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} ${isLoading ? 'animate-spin' : ''}`} />
                 </button>
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                   title={isDarkMode ? '切換至日間模式' : '切換至夜間模式'}
                 >
                   {isDarkMode ? (
-                    <Sun className="w-5 h-5 text-yellow-400" />
+                    <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
                   ) : (
-                    <Moon className="w-5 h-5 text-gray-800" />
+                    <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-800" />
                   )}
                 </button>
-                <Bell className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} />
-                <div className="flex items-center space-x-2">
+                <Bell className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} hidden sm:block`} />
+                <div className="hidden sm:flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-white" />
                   </div>
@@ -675,7 +704,7 @@ const App = () => {
 
           {/* 主內容區域 - 單一滾動容器，美化滾動條 */}
           <main
-            className={`flex-1 ${selectedCategory === 'etica' ? 'p-0' : 'p-4 lg:p-8'} relative overflow-hidden`}
+            className={`flex-1 ${selectedCategory === 'etica' ? 'p-0' : 'p-2 sm:p-4 lg:p-8'} relative overflow-hidden`}
             style={{
               overflowY: 'auto',
               scrollbarWidth: 'thin',
@@ -720,10 +749,10 @@ const App = () => {
         </div>
       </div>
 
-      {/* 移動端遮罩 */}
+      {/* 移動端遮罩 - 只在 < 500px 顯示 */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 min-[500px]:hidden"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
