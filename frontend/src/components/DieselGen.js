@@ -220,8 +220,8 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>ACB</span>
-              <span className={`font-medium ${dieselData.status.ACB === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {dieselData.status.ACB === 0 ? 'OFF' : 'ON'}
+              <span className={`font-medium ${dieselData.status.acb === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {dieselData.status.acb === 0 ? 'OFF' : 'ON'}
               </span>
             </div>
             {/* <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">

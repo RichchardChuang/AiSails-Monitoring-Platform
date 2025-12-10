@@ -425,8 +425,8 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
   // 系統連線狀態卡片
   const SystemStatusCard = () => {
     // 判斷各系統是否連線（根據資料是否存在且有效）
-    const essOnline = realTimeData.ess?.voltage > 0;
-    const pcsOnline = realTimeData.ess?.pcs?.frequency > 0;
+    const essOnline = realTimeData.ess?.current !== 0;
+    const pcsOnline = realTimeData.ess?.pcs?.current !== 0;
     const dgOnline = realTimeData.diesel?.status?.started || false;
     const pn14Online = realTimeData.pn14?.connected || false;
 
@@ -509,7 +509,7 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
           value= {dieselData.status.engineSwitch === false ? '停止' : '運行'}
           unit=""
           // change="0"
-          content={"frequency: " + (dieselData.other.power || "0") + " kw"}
+          content={"output power: " + (dieselData.other.power || "0") + " kw"}
           trend="up"
         >
           <Fuel className="w-8 h-8 text-orange-500" />

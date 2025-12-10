@@ -3,12 +3,21 @@ import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, Toggl
 
 const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState('pcs');
-  const [isAdmin, setIsAdmin] = useState(true); // TODO: 從權限管理系統獲取
-  const [isEditing, setIsEditing] = useState({});
+  const [isAdmin] = useState(true); // TODO: 從權限管理系統獲取
   const [isExecuting, setIsExecuting] = useState(false);
-  const [originalValues, setOriginalValues] = useState({});
+  const [editingValues, setEditingValues] = useState({}); // 儲存編輯中的值
 
   const essData = realTimeData.ess;
+
+  // 初始化 editingValues，確保頻率輸入框有初始值
+  React.useEffect(() => {
+    if (editingValues['pcs_frequency'] === undefined && essData.pcs.frequency) {
+      setEditingValues(prev => ({
+        ...prev,
+        ['pcs_frequency']: essData.pcs.frequency
+      }));
+    }
+  }, [essData.pcs.frequency, editingValues]);
 
   // 發送命令到後端並記錄 log
   const sendCommand = async (device, action, description) => {
@@ -96,142 +105,54 @@ const frequencyReset = async (category, field, InputValue) => {
       }
     }
   }));
+  // 同時更新 editingValues
+  setEditingValues(prev => ({
+    ...prev,
+    [`${category}_${field}`]: InputValue
+  }));
   // 發送命令到後端
   await sendCommand(category, "pcs_freq_reset", `調整頻率重置為${InputValue}Hz`);
 };
 
-const toggleEditWithValue = async (key, currentInputValue) => {
-  const [category, field] = key.split('_');
-  
-  // 先更新狀態
-  handleValueChange(category, field, currentInputValue);
-  
-  // 頻率控制的特殊處理
-  if (category === 'pcs' && field === 'frequency') {
-    // 檢查數值範圍
-    if (currentInputValue < 59.77) {
-      alert('頻率值太低！請設定在 59.77-60 Hz 之間');
-      const originalValue = originalValues[key];
-      if (originalValue !== undefined) {
-        handleValueChange(category, field, originalValue);
-      }
-      return;
-    }
-    if (currentInputValue > 60) {
-      alert('頻率值太高！請設定在 59.77-60 Hz 之間');
-      const originalValue = originalValues[key];
-      if (originalValue !== undefined) {
-        handleValueChange(category, field, originalValue);
-      }
-      return;
-    }
-    
-    // 取得原始值進行比較
-    const originalValue = originalValues[key];
-    
-    if (originalValue !== undefined) {
-      let action;
-      if (currentInputValue > originalValue) {
-        action = 'pcs_freq_up';
-      } else if (currentInputValue < originalValue) {
-        action = 'pcs_freq_down';
-      } else {
-        // 值沒有改變，只切換編輯狀態
-        setIsEditing(prev => ({
-          ...prev,
-          [key]: false
-        }));
-        return;
-      }
-      
-      // 發送命令到後端
-      await sendCommand(category, action, `調整頻率為${currentInputValue}Hz`);
-    }
-  }
-  
-  // 切換編輯狀態
-  setIsEditing(prev => ({
-    ...prev,
-    [key]: false
-  }));
-};
+const handleFrequencySubmit = async () => {
+  const key = 'pcs_frequency';
+  const currentValue = editingValues[key] !== undefined ? editingValues[key] : essData.pcs.frequency;
+  const originalValue = essData.pcs.frequency;
 
-const toggleEdit = async (key) => {
-  const isCurrentlyEditing = isEditing[key];
-
-  if (isCurrentlyEditing) {
-    const [category, field] = key.split('_');
-    const currentValue = essData[category][field];
-      // 取得原始值
-  const originalValue = originalValues[key] || essData[category][field];
-    // 頻率控制的特殊處理
-    if (category === 'pcs' && field === 'frequency') {
-      // 檢查數值範圍
-      // 方法2：將函數定義移到 if 判斷內部
-      if (currentValue < 59.77) {
-        alert('頻率值太低！請設定在 59.77-60 Hz 之間');
-        const originalValue = originalValues[key] || essData[category][field];
-        setRealTimeData(prev => ({
-          ...prev,
-          ess: {
-            ...prev.ess,
-            [category]: {
-              ...prev.ess[category],
-              [field]: originalValue
-            }
-          }
-        }));
-        return;
-      }
-      if (currentValue > 60) {
-        alert('頻率值太高！請設定在 59.77-60 Hz 之間');
-        const originalValue = originalValues[key] || essData[category][field];
-        setRealTimeData(prev => ({
-          ...prev,
-          ess: {
-            ...prev.ess,
-            [category]: {
-              ...prev.ess[category],
-              [field]: originalValue
-            }
-          }
-        }));
-        return;
-      }
-      
-
-      
-      let action;
-      if (currentValue > originalValue) {
-        action = 'pcs_freq_up';
-      } else if (currentValue < originalValue) {
-        action = 'pcs_freq_down';
-      } else {
-        // 值沒有改變，不需要發送命令
-        setIsEditing(prev => ({
-          ...prev,
-          [key]: !prev[key]
-        }));
-        return;
-      }
-      
-      // 發送命令到後端
-      await sendCommand(category, action, `調整頻率為${currentValue}Hz`);
-    }
-  } else {
-    // 進入編輯模式時，保存原始值
-    const [category, field] = key.split('_');
-    setOriginalValues(prev => ({
+  // 檢查數值範圍
+  if (currentValue < 59.77) {
+    alert('頻率值太低！請設定在 59.77-60 Hz 之間');
+    setEditingValues(prev => ({
       ...prev,
-      [key]: essData[category][field]
+      [key]: essData.pcs.frequency
     }));
+    return;
   }
-  
-  // 切換編輯狀態
-  setIsEditing(prev => ({
-    ...prev,
-    [key]: !prev[key]
-  }));
+  if (currentValue > 60) {
+    alert('頻率值太高！請設定在 59.77-60 Hz 之間');
+    setEditingValues(prev => ({
+      ...prev,
+      [key]: essData.pcs.frequency
+    }));
+    return;
+  }
+
+  // 判斷調整方向
+  let action;
+  if (currentValue > originalValue) {
+    action = 'pcs_freq_up';
+  } else if (currentValue < originalValue) {
+    action = 'pcs_freq_down';
+  } else {
+    alert('頻率值未改變');
+    return;
+  }
+
+  // 發送命令到後端
+  await sendCommand('pcs', action, `調整頻率為${currentValue.toFixed(2)}Hz`);
+
+  // 更新 realTimeData
+  handleValueChange('pcs', 'frequency', currentValue);
 };
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, isSwitch = false, onToggle, className = "", editable = false, category = "", field = "" }) => (
@@ -254,44 +175,6 @@ const toggleEdit = async (key) => {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className={`text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap pr-2`}>{title}</h3>
-            {editable && isAdmin && (
-              <button
-                onClick={() => {
-                  if (isEditing[`${category}_${field}`]) {
-                    const inputElement = document.querySelector(`input[data-category="${category}"][data-field="${field}"]`);
-                    const currentInputValue = inputElement ? parseFloat(inputElement.value) : value;
-                    toggleEditWithValue(`${category}_${field}`, currentInputValue);
-                  } else {
-                    toggleEdit(`${category}_${field}`);
-                  }
-                }}
-                className="text-xs text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap"
-              >
-                {isEditing[`${category}_${field}`] ? '完成' : '手動調整'}
-              </button>
-            )}
-            {editable && isAdmin && (
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => {
-                    const InputValue = 60.00;
-                    // 重設為 60.00
-                    frequencyReset(category, field, InputValue);
-                    // 如果正在編輯模式，也要更新 input 的值
-                    if (isEditing[`${category}_${field}`]) {
-                      const inputElement = document.querySelector(`input[data-category="${category}"][data-field="${field}"]`);
-                      if (inputElement) {
-                        inputElement.value = InputValue;
-                      }
-                    }
-                  }}
-                  className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                  title="重設為 60Hz"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -309,19 +192,6 @@ const toggleEdit = async (key) => {
               {value ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
               <span className="font-medium text-xl">{value ? 'RUN' : 'STOP'}</span>
             </button>
-          ) : editable && isAdmin && isEditing[`${category}_${field}`] ? (
-            <div className="flex items-center space-x-2">
-              <input
-                data-category={category}
-                data-field={field}
-                type="number"
-                step="0.01"
-                defaultValue={value}
-                // onBlur={(e) => handleValueChange(category, field, e.target.value)}
-                className="w-20 px-2 py-1 text-lg font-bold border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <span className="text-sm text-gray-500">{unit}</span>
-            </div>
           ) : (
             <div className="flex items-baseline space-x-1">
               <span className={`font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} ${category === 'pcs' && field === 'frequency' ? 'text-xl xl:text-2xl' : 'text-xl xl:text-2xl'}`}>
@@ -1070,18 +940,96 @@ const toggleEdit = async (key) => {
             </div>
           )}
 
-          {/* PCS 控制指標 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MetricCard
-              title="頻率控制"
-              value={essData.pcs.frequency}
-              unit="Hz"
-              icon={Activity}
-              status={essData.pcs.status}
-              editable={true}
-              category="pcs"
-              field="frequency"
-            />
+          {/* 頻率控制區域 */}
+          <div className={`${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-xl p-4 mb-4`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <Activity className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h4 className={`font-semibold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>頻率控制</h4>
+              </div>
+              <button
+                onClick={() => {
+                  frequencyReset('pcs', 'frequency', 60.00);
+                }}
+                disabled={!isAdmin || isExecuting}
+                className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  !isAdmin || isExecuting
+                    ? 'opacity-50 cursor-not-allowed bg-gray-300 text-gray-500'
+                    : isDarkMode
+                      ? 'bg-gray-600 hover:bg-gray-500 text-gray-200'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
+                title="重設為 60Hz"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>重設 60Hz</span>
+              </button>
+            </div>
+
+            {isAdmin ? (
+              <div className="space-y-3">
+                <div className="flex items-stretch">
+                  <div className={`flex-1 flex items-center relative rounded-l-lg border-2 transition-all ${
+                    isDarkMode
+                      ? 'bg-gray-800 border-gray-600 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/50'
+                      : 'bg-white border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
+                  } ${isExecuting ? 'opacity-50' : ''}`}>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="59.77"
+                      max="60.00"
+                      value={editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency}
+                      onChange={(e) => {
+                        const newValue = parseFloat(e.target.value) || 0;
+                        setEditingValues(prev => ({
+                          ...prev,
+                          ['pcs_frequency']: newValue
+                        }));
+                      }}
+                      disabled={isExecuting}
+                      className={`flex-1 px-4 py-2.5 text-2xl font-bold bg-transparent border-0 outline-none ${
+                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
+                      } ${isExecuting ? 'cursor-not-allowed' : ''}`}
+                    />
+                    <span className={`pr-4 text-lg font-medium pointer-events-none ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                      Hz
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleFrequencySubmit()}
+                    disabled={isExecuting}
+                    className={`flex items-center justify-center space-x-1.5 px-6 rounded-r-lg text-sm font-medium transition-all border-2 border-l-0 ${
+                      isExecuting
+                        ? 'opacity-50 cursor-not-allowed bg-gray-400 text-gray-600 border-gray-400'
+                        : isDarkMode
+                          ? 'bg-green-600 hover:bg-green-500 text-white border-green-600 hover:border-green-500'
+                          : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:border-green-600'
+                    }`}
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>確認</span>
+                  </button>
+                </div>
+
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+                  建議範圍: 59.77-60.00 Hz
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <div className={`text-4xl font-bold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                  {essData.pcs.frequency.toFixed(2)} Hz
+                </div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  (唯讀模式)
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 其他PCS指標 */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard
               title="PCS狀態"
               value={essData.pcs.pcsStatus}

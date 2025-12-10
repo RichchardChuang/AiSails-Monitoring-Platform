@@ -1,11 +1,35 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Wind, Activity, Gauge, TrendingUp, Power, AlertTriangle, CheckCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
   const [chartTimeRange, setChartTimeRange] = useState('1h');
+  const [chartUpdateKey, setChartUpdateKey] = useState(0);
+  const [displayData, setDisplayData] = useState({ windSpeed: 0, tension: 0, status: 'active' });
 
   const skysailsData = realTimeData.skysails;
+
+  // 每 30 秒更新一次圖表和顯示數據
+  useEffect(() => {
+    // 初始化 displayData
+    setDisplayData({
+      windSpeed: skysailsData.windSpeed,
+      tension: skysailsData.tension,
+      status: skysailsData.status
+    });
+
+    const interval = setInterval(() => {
+      setChartUpdateKey(prev => prev + 1);
+      // 同時更新顯示數據
+      setDisplayData({
+        windSpeed: skysailsData.windSpeed,
+        tension: skysailsData.tension,
+        status: skysailsData.status
+      });
+    }, 30000); // 30秒 = 30000毫秒
+
+    return () => clearInterval(interval);
+  }, [skysailsData.windSpeed, skysailsData.tension, skysailsData.status]);
 
   const MetricCard = ({ title, value, unit, status, icon: Icon, trend, subtitle, className = "" }) => (
     <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${className}`}>
@@ -49,16 +73,16 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
     </div>
   );
 
-  // 模擬風速歷史數據
-  const generateChartData = () => {
+  // 使用 useMemo 緩存圖表數據，只在 chartUpdateKey 或 chartTimeRange 改變時才重新生成
+  const chartData = useMemo(() => {
     const points = chartTimeRange === '1h' ? 60 : chartTimeRange === '24h' ? 24 : 7;
     const data = [];
     for (let i = points; i >= 0; i--) {
       const currentWindSpeed = Math.max(0, skysailsData.windSpeed + (Math.random() - 0.5) * 8);
-      
+
       data.push({
-        time: chartTimeRange === '1h' ? `${i}m ago` : 
-              chartTimeRange === '24h' ? `${i}h ago` : 
+        time: chartTimeRange === '1h' ? `${i}m ago` :
+              chartTimeRange === '24h' ? `${i}h ago` :
               `${i}d ago`,
         windSpeed: currentWindSpeed,
         tension: Math.max(0, skysailsData.tension + (Math.random() - 0.5) * 500),
@@ -67,9 +91,33 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       });
     }
     return data.reverse();
-  };
+  }, [chartUpdateKey, chartTimeRange, skysailsData.windSpeed, skysailsData.tension]);
 
-  const chartData = generateChartData();
+  // 計算動態 Y 軸範圍
+  const yAxisRanges = useMemo(() => {
+    const windSpeeds = chartData.map(d => d.windSpeed);
+    const powers = chartData.map(d => d.power);
+
+    const minWindSpeed = Math.min(...windSpeeds);
+    const maxWindSpeed = Math.max(...windSpeeds);
+    const minPower = Math.min(...powers);
+    const maxPower = Math.max(...powers);
+
+    // 添加 10% 的緩衝空間，讓圖表看起來更舒適
+    const windSpeedBuffer = (maxWindSpeed - minWindSpeed) * 0.1 || 1;
+    const powerBuffer = (maxPower - minPower) * 0.1 || 5;
+
+    return {
+      windSpeed: {
+        min: Math.max(0, Math.floor(minWindSpeed - windSpeedBuffer)),
+        max: Math.ceil(maxWindSpeed + windSpeedBuffer)
+      },
+      power: {
+        min: Math.max(0, Math.floor(minPower - powerBuffer)),
+        max: Math.ceil(maxPower + powerBuffer)
+      }
+    };
+  }, [chartData]);
 
   const WindSpeedChart = () => (
     <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
@@ -98,7 +146,7 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       
       <div className="h-64 relative">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} key={chartUpdateKey}>
             <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#f3f4f6'} />
             <XAxis
               dataKey="time"
@@ -106,20 +154,20 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
               tickLine={false}
               tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
             />
-            {/* 左側 Y 軸 - 風速 */}
+            {/* 左側 Y 軸 - 風速（動態範圍） */}
             <YAxis
               yAxisId="left"
-              domain={[0, 25]}
+              domain={[yAxisRanges.windSpeed.min, yAxisRanges.windSpeed.max]}
               axisLine={true}
               tickLine={false}
               tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
               label={{ value: '風速 (m/s)', angle: -90, position: 'insideLeft', fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
             />
-            {/* 右側 Y 軸 - 功率 */}
+            {/* 右側 Y 軸 - 功率（動態範圍） */}
             <YAxis
               yAxisId="right"
               orientation="right"
-              domain={[0, 100]}
+              domain={[yAxisRanges.power.min, yAxisRanges.power.max]}
               axisLine={true}
               tickLine={false}
               tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
@@ -133,28 +181,31 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
                 fontSize: '12px',
                 color: isDarkMode ? '#e5e7eb' : '#000000'
               }}
+              isAnimationActive={false}
             />
             {/* 風速線 - 使用左側 Y 軸 */}
-            <Line 
+            <Line
               yAxisId="left"
-              type="monotone" 
-              dataKey="windSpeed" 
-              stroke="#3b82f6" 
+              type="monotone"
+              dataKey="windSpeed"
+              stroke="#3b82f6"
               strokeWidth={2}
               dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
               activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2 }}
               name="風速"
+              isAnimationActive={false}
             />
             {/* 功率線 - 使用右側 Y 軸 */}
-            <Line 
+            <Line
               yAxisId="right"
-              type="monotone" 
-              dataKey="power" 
-              stroke="#ef4444" 
+              type="monotone"
+              dataKey="power"
+              stroke="#ef4444"
               strokeWidth={2}
               dot={{ fill: '#ef4444', strokeWidth: 0, r: 3 }}
               activeDot={{ r: 5, stroke: '#ef4444', strokeWidth: 2 }}
               name="功率"
+              isAnimationActive={false}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -306,27 +357,27 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricCard
           title="風速"
-          value={skysailsData.windSpeed}
+          value={displayData.windSpeed}
           unit="m/s"
-          status={skysailsData.status}
+          status={displayData.status}
           icon={Wind}
-          trend={skysailsData.windSpeed > 10 ? "5.2" : null}
+          trend={displayData.windSpeed > 10 ? "5.2" : null}
           subtitle="平均風速"
         />
         <MetricCard
           title="拉力"
-          value={skysailsData.tension}
+          value={displayData.tension}
           unit="N"
-          status={skysailsData.tension > 3000 ? "warning" : "active"}
+          status={displayData.tension > 3000 ? "warning" : "active"}
           icon={Gauge}
-          trend={skysailsData.tension > 2000 ? "3.1" : null}
+          trend={displayData.tension > 2000 ? "3.1" : null}
           subtitle="系統張力"
         />
         <MetricCard
           title="狀態"
-          value={skysailsData.status === 'active' ? '運行中' : '待機'}
+          value={displayData.status === 'active' ? '運行中' : '待機'}
           unit=""
-          status={skysailsData.status}
+          status={displayData.status}
           icon={Activity}
           subtitle="系統狀態"
         />
