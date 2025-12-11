@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Gauge,RefreshCw } from 'lucide-react';
+import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDarkMode }) => {
   const [activeTab, setActiveTab] = useState('pcs');
@@ -480,7 +480,7 @@ const handleFrequencySubmit = async () => {
                     </div>
                   </div>
                   <div className="mt-4">
-                    <button
+                    {/* <button
                       onClick={toggleESSSwitch}
                       disabled={!isAdmin || isExecuting}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
@@ -489,7 +489,7 @@ const handleFrequencySubmit = async () => {
                     >
                       {(essData.switch || essData.ups?.switch) ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                       <span className="font-medium text-xl">{(essData.switch || essData.ups?.switch) ? 'RUN' : 'STOP'}</span>
-                    </button>
+                    </button> */}
                   </div>
                 </div>
 
@@ -967,52 +967,194 @@ const handleFrequencySubmit = async () => {
             </div>
 
             {isAdmin ? (
-              <div className="space-y-3">
-                <div className="flex items-stretch">
-                  <div className={`flex-1 flex items-center relative rounded-l-lg border-2 transition-all ${
-                    isDarkMode
-                      ? 'bg-gray-800 border-gray-600 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/50'
-                      : 'bg-white border-gray-300 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20'
-                  } ${isExecuting ? 'opacity-50' : ''}`}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="59.77"
-                      max="60.00"
-                      value={editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency}
-                      onChange={(e) => {
-                        const newValue = parseFloat(e.target.value) || 0;
-                        setEditingValues(prev => ({
-                          ...prev,
-                          ['pcs_frequency']: newValue
-                        }));
-                      }}
-                      disabled={isExecuting}
-                      className={`flex-1 px-4 py-2.5 text-2xl font-bold bg-transparent border-0 outline-none ${
-                        isDarkMode ? 'text-gray-100' : 'text-gray-900'
-                      } ${isExecuting ? 'cursor-not-allowed' : ''}`}
-                    />
-                    <span className={`pr-4 text-lg font-medium pointer-events-none ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                      Hz
-                    </span>
+              <div className="space-y-6">
+                {/* 頻率圓形旋鈕 - 3D 立體設計 */}
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="relative w-56 h-56">
+                    {/* 白色圓 - 3D浮凸感，加粗 */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white to-gray-100" style={{
+                      boxShadow: 'inset 6px 6px 12px rgba(0, 0, 0, 0.15), inset -6px -6px 12px rgba(255, 255, 255, 1), 8px 8px 16px rgba(0, 0, 0, 0.15)'
+                    }}></div>
+
+                    {/* SVG 進度圓環 */}
+                    <svg className="absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] transform -rotate-90" viewBox="0 0 200 200">
+                      {/* 背景圓環 - 淺灰色，浮凸效果 */}
+                      <defs>
+                        <filter id="ringEmboss">
+                          <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                          <feOffset dx="2" dy="2" result="offsetblur"/>
+                          <feComponentTransfer>
+                            <feFuncA type="linear" slope="0.3"/>
+                          </feComponentTransfer>
+                          <feMerge>
+                            <feMergeNode/>
+                            <feMergeNode in="SourceGraphic"/>
+                          </feMerge>
+                        </filter>
+                      </defs>
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="85"
+                        fill="none"
+                        stroke="#d1d5db"
+                        strokeWidth="14"
+                        filter="url(#ringEmboss)"
+                      />
+
+                      {/* 完整橘紅色圓環 - 不再是進度條 */}
+                      <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ff6b6b" />
+                          <stop offset="100%" stopColor="#ff8e53" />
+                        </linearGradient>
+                      </defs>
+                      <circle
+                        cx="100"
+                        cy="100"
+                        r="85"
+                        fill="none"
+                        stroke="url(#progressGradient)"
+                        strokeWidth="14"
+                        className="drop-shadow-lg"
+                        style={{ filter: 'drop-shadow(0 3px 6px rgba(255, 107, 107, 0.5))' }}
+                      />
+
+                      {/* 指標 - 小三角形指針 */}
+                      {(() => {
+                        const currentValue = editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency;
+                        const percentage = ((currentValue - 59.77) / (60.00 - 59.77)) * 100;
+                        const angle = (percentage / 100) * 360;
+                        const radian = (angle * Math.PI) / 180;
+
+                        // 小三角形靠近橘色環
+                        const distance = 75; // 靠近橘環但有小間距
+                        const tipX = 100 + distance * Math.cos(radian);
+                        const tipY = 100 + distance * Math.sin(radian);
+
+                        // 三角形底部兩個點
+                        const baseWidth = 5;
+                        const triangleHeight = 8;
+                        const baseX = 100 + (distance - triangleHeight) * Math.cos(radian);
+                        const baseY = 100 + (distance - triangleHeight) * Math.sin(radian);
+
+                        const perpAngle = radian + Math.PI / 2;
+                        const base1X = baseX + baseWidth * Math.cos(perpAngle);
+                        const base1Y = baseY + baseWidth * Math.sin(perpAngle);
+                        const base2X = baseX - baseWidth * Math.cos(perpAngle);
+                        const base2Y = baseY - baseWidth * Math.sin(perpAngle);
+
+                        return (
+                          <polygon
+                            points={`${tipX},${tipY} ${base1X},${base1Y} ${base2X},${base2Y}`}
+                            fill="#9ca3af"
+                            className="transition-all duration-300"
+                            style={{ filter: 'drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3))' }}
+                          />
+                        );
+                      })()}
+                    </svg>
+
+                    {/* 刻度線 SVG - 畫在白色環上 */}
+                    <svg className="absolute inset-1 w-[calc(100%-0.5rem)] h-[calc(100%-0.5rem)] transform -rotate-90" viewBox="0 0 210 210">
+                      {/* 刻度線 */}
+                      {Array.from({ length: 36 }, (_, i) => {
+                        const angle = (i / 35) * 360;
+                        const radian = (angle * Math.PI) / 180;
+                        const isMainTick = i % 9 === 0;
+                        const x1 = 105 + 99 * Math.cos(radian);
+                        const y1 = 105 + 99 * Math.sin(radian);
+                        const x2 = 105 + (isMainTick ? 90 : 94) * Math.cos(radian);
+                        const y2 = 105 + (isMainTick ? 90 : 94) * Math.sin(radian);
+
+                        return (
+                          <line
+                            key={i}
+                            x1={x1}
+                            y1={y1}
+                            x2={x2}
+                            y2={y2}
+                            stroke="#cbd5e1"
+                            strokeWidth={isMainTick ? "2" : "1.5"}
+                            strokeLinecap="round"
+                          />
+                        );
+                      })}
+                    </svg>
+
+                    {/* 中央數值顯示 */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center mt-6">
+                      <div className={`text-3xl font-bold ${isDarkMode ? 'text-gray-800' : 'text-gray-900'} tracking-tight`}>
+                        {(editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency).toFixed(2)}
+                      </div>
+                      <div className="text-sm font-medium mt-1 text-gray-500">Hz</div>
+                    </div>
                   </div>
+                </div>
+
+                {/* 三個控制按鈕 - 圓形立體設計 */}
+                <div className="flex items-center justify-center gap-6">
+                  {/* 減頻率 */}
                   <button
-                    onClick={() => handleFrequencySubmit()}
-                    disabled={isExecuting}
-                    className={`flex items-center justify-center space-x-1.5 px-6 rounded-r-lg text-sm font-medium transition-all border-2 border-l-0 ${
-                      isExecuting
-                        ? 'opacity-50 cursor-not-allowed bg-gray-400 text-gray-600 border-gray-400'
-                        : isDarkMode
-                          ? 'bg-green-600 hover:bg-green-500 text-white border-green-600 hover:border-green-500'
-                          : 'bg-green-500 hover:bg-green-600 text-white border-green-500 hover:border-green-600'
+                    onClick={async () => {
+                      const currentValue = editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency;
+                      const newValue = Math.max(59.77, currentValue - 0.01);
+                      setEditingValues(prev => ({ ...prev, ['pcs_frequency']: newValue }));
+                    }}
+                    disabled={isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) <= 59.77}
+                    className={`relative w-16 h-16 rounded-full transition-all duration-200 ${
+                      isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) <= 59.77
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'hover:scale-105 active:scale-95'
                     }`}
+                    style={{
+                      background: 'linear-gradient(145deg, #e3e8ef, #f5f7fa)',
+                      boxShadow: '6px 6px 12px #c5cdd6, -6px -6px 12px #ffffff'
+                    }}
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>確認</span>
+                    <span className="text-2xl font-bold text-gray-700">−</span>
+                  </button>
+
+                  {/* 重整到60Hz */}
+                  <button
+                    onClick={() => frequencyReset('pcs', 'frequency', 60.00)}
+                    disabled={isExecuting}
+                    className={`relative w-16 h-16 rounded-full transition-all duration-200 ${
+                      isExecuting
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'hover:scale-105 active:scale-95'
+                    }`}
+                    style={{
+                      background: 'linear-gradient(145deg, #e3e8ef, #f5f7fa)',
+                      boxShadow: '6px 6px 12px #c5cdd6, -6px -6px 12px #ffffff'
+                    }}
+                  >
+                    <RefreshCw className="w-6 h-6 text-gray-700 mx-auto" />
+                  </button>
+
+                  {/* 加頻率 */}
+                  <button
+                    onClick={async () => {
+                      const currentValue = editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency;
+                      const newValue = Math.min(60.00, currentValue + 0.01);
+                      setEditingValues(prev => ({ ...prev, ['pcs_frequency']: newValue }));
+                    }}
+                    disabled={isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) >= 60.00}
+                    className={`relative w-16 h-16 rounded-full transition-all duration-200 ${
+                      isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) >= 60.00
+                        ? 'opacity-40 cursor-not-allowed'
+                        : 'hover:scale-105 active:scale-95'
+                    }`}
+                    style={{
+                      background: 'linear-gradient(145deg, #e3e8ef, #f5f7fa)',
+                      boxShadow: '6px 6px 12px #c5cdd6, -6px -6px 12px #ffffff'
+                    }}
+                  >
+                    <span className="text-2xl font-bold text-gray-700">+</span>
                   </button>
                 </div>
 
-                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center`}>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} text-center mt-4`}>
                   建議範圍: 59.77-60.00 Hz
                 </div>
               </div>
