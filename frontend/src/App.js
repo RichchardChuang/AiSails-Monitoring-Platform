@@ -51,7 +51,7 @@ const App = () => {
         temperature: 0  // sbms.rack4.temperature
       },
       soc: 0,  // sbms.soc
-      soh: 100, // sbms.soh
+      soh: 0, // sbms.soh
       ups: {
         status: 'normal',  // sbms.connected
         ups_batteryvoltage: 0, //sbms.ups_batteryvoltage
@@ -226,7 +226,7 @@ const App = () => {
             },
             // temperature: data.devices.sbms?.temperature || 0,
             soc: data.devices.sbms?.soc || 0, // sbms.soc 
-            soh: data.devices.sbms?.soh || 100, // sbms.soh 電池的健康狀態
+            soh: data.devices.sbms?.soh || 0, // sbms.soh 電池的健康狀態
             // UPS 系統
             ups: {
               status: data.devices.sbms?.connected ? 'normal' : 'offline',
@@ -375,7 +375,12 @@ const App = () => {
       try {
         await fetchDeviceStatus();
       } catch (err) {
-        console.log('API not available, using simulated data');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('API not available, using simulated data in development mode.');
+        } else {
+          console.error('API connection failed:', err);
+          setError(`連線失敗：無法連接到後端服務 (${err.message})`);
+        }
       }
     };
 
@@ -384,31 +389,38 @@ const App = () => {
     // 定時靜默更新（不顯示 loading overlay）
     const interval = setInterval(() => {
       // 直接呼叫 fetchDeviceStatus，不經過 fetchAllSystemData
-      fetchDeviceStatus().catch(() => {
-        // 模擬數據更新
-        setRealTimeData(prev => ({
-          ...prev,
-          skysails: {
-            ...prev.skysails,
-            windSpeed: Math.max(0, prev.skysails.windSpeed + (Math.random() - 0.5) * 2),
-            tension: Math.max(0, prev.skysails.tension + (Math.random() - 0.5) * 100)
-          },
-          ess: {
-            ...prev.ess,
-            ups: {
-              ...prev.ess.ups,
-              voltage: Math.max(90, Math.min(110, prev.ess.ups.voltage + (Math.random() - 0.5) * 2)),
-              current: Math.max(8, Math.min(12, prev.ess.ups.current + (Math.random() - 0.5) * 0.5)),
-              temperature: Math.max(0, Math.min(10, prev.ess.ups.temperature + (Math.random() - 0.5) * 0.5))
+      fetchDeviceStatus().catch((err) => {
+        if (process.env.NODE_ENV === 'development') {
+          // 開發模式：使用模擬數據更新
+          console.log('Using simulated data in development mode');
+          setRealTimeData(prev => ({
+            ...prev,
+            skysails: {
+              ...prev.skysails,
+              windSpeed: Math.max(0, prev.skysails.windSpeed + (Math.random() - 0.5) * 2),
+              tension: Math.max(0, prev.skysails.tension + (Math.random() - 0.5) * 100)
             },
-            pcs: {
-              ...prev.ess.pcs,
-              frequency: Math.max(18, Math.min(22, prev.ess.pcs.frequency + (Math.random() - 0.5) * 0.5)),
-              voltage: Math.max(95, Math.min(105, prev.ess.pcs.voltage + (Math.random() - 0.5) * 1)),
-              current: Math.max(18, Math.min(22, prev.ess.pcs.current + (Math.random() - 0.5) * 0.5))
+            ess: {
+              ...prev.ess,
+              ups: {
+                ...prev.ess.ups,
+                voltage: Math.max(90, Math.min(110, prev.ess.ups.voltage + (Math.random() - 0.5) * 2)),
+                current: Math.max(8, Math.min(12, prev.ess.ups.current + (Math.random() - 0.5) * 0.5)),
+                temperature: Math.max(0, Math.min(10, prev.ess.ups.temperature + (Math.random() - 0.5) * 0.5))
+              },
+              pcs: {
+                ...prev.ess.pcs,
+                frequency: Math.max(18, Math.min(22, prev.ess.pcs.frequency + (Math.random() - 0.5) * 0.5)),
+                voltage: Math.max(95, Math.min(105, prev.ess.pcs.voltage + (Math.random() - 0.5) * 1)),
+                current: Math.max(18, Math.min(22, prev.ess.pcs.current + (Math.random() - 0.5) * 0.5))
+              }
             }
-          }
-        }));
+          }));
+        } else {
+          // 生產模式：顯示錯誤訊息
+          console.error('Failed to fetch device status:', err);
+          setError(`資料更新失敗：無法連接到後端服務器`);
+        }
       });
     }, 10000);
 

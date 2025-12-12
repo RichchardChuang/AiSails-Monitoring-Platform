@@ -125,12 +125,12 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           </span>
         )}
       <div className="flex items-start justify-between mb-4 mt-3">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 ${isDarkMode ? 'bg-orange-900/50' : 'bg-orange-50'} rounded-lg`}>
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
+          <div className={`p-2 ${isDarkMode ? 'bg-orange-900/50' : 'bg-orange-50'} rounded-lg flex-shrink-0`}>
             <Icon className={`w-5 h-5 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
           </div>
-          <div>
-            <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h3>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h3 className={`text-xs md:text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{title}</h3>
           </div>
         </div>
       </div>
@@ -178,7 +178,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           value={dieselData.status.oilPressure}
           unit="bar"
           icon={Fuel}
-          status="normal"
+          status={dieselData.status.oilPressure === 0 ? 'inactive' : 'normal'}
           category="diesel"
           field="oilPressure"
         />
@@ -187,7 +187,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           value={dieselData.status.coolantTemp}
           unit="°C"
           icon={Thermometer}
-          status="normal"
+          status={dieselData.status.coolantTemp === 0 ? 'inactive' : 'normal'}
           category="diesel"
           field="coolantTemp"
         />
@@ -197,7 +197,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           value={dieselData.status.fuel}
           unit=""
           icon={Fuel}
-          status="ready"
+          status={dieselData.status.fuel === 'N/A' || dieselData.status.fuel === 0 ? 'inactive' : 'ready'}
           category="diesel"
           field="fuel"
         />
@@ -278,7 +278,7 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
 
   const PowerSystem = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <h3 className={`text-lg font-semibold mb-4 flex items-center ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
             <Zap className={`w-5 h-5 mr-2 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
@@ -414,28 +414,28 @@ const DieselGen = ({ realTimeData, setRealTimeData, onCommandExecute, isDarkMode
           value={dieselData.other.batteryVoltage}
           unit="V"
           icon={Battery}
-          status="normal"
+          status={dieselData.other.batteryVoltage === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="磁場電壓"
           value={dieselData.other.fieldVoltage}
           unit="V"
           icon={Zap}
-          status="normal"
+          status={dieselData.other.fieldVoltage === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="溫度"
           value={dieselData.other.temperature}
           unit="°C"
           icon={Thermometer}
-          status="normal"
+          status={dieselData.other.temperature === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="功率"
           value={dieselData.other.power}
           unit=""
           icon={Power}
-          status="standby"
+          status={dieselData.other.power === 0 ? 'inactive' : 'standby'}
         />
       </div>
 

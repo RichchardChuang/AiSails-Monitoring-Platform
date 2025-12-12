@@ -34,13 +34,13 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
   const MetricCard = ({ title, value, unit, status, icon: Icon, trend, subtitle, className = "" }) => (
     <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${className}`}>
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg`}>
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
+          <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg flex-shrink-0`}>
             <Icon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
-          <div>
-            <h3 className={`font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>{title}</h3>
-            {subtitle && <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{subtitle}</p>}
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h3 className={`text-xs md:text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{title}</h3>
+            {subtitle && <p className={`text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{subtitle}</p>}
           </div>
         </div>
         {status && (
@@ -354,7 +354,7 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       </div>
 
       {/* 主要指標卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <MetricCard
           title="風速"
           value={displayData.windSpeed}
@@ -368,7 +368,7 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
           title="拉力"
           value={displayData.tension}
           unit="N"
-          status={displayData.tension > 3000 ? "warning" : "active"}
+          status={displayData.tension === "--" || displayData.tension === 0 ? "inactive" : "active"}
           icon={Gauge}
           trend={displayData.tension > 2000 ? "3.1" : null}
           subtitle="系統張力"

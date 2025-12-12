@@ -169,12 +169,12 @@ const handleFrequencySubmit = async () => {
           </span>
         )}
       <div className="flex items-start justify-between mb-4 mt-3 gap-2">
-        <div className="flex items-center space-x-3 min-w-0 flex-1">
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
           <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg flex-shrink-0`}>
             <Icon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className={`text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} whitespace-nowrap pr-2`}>{title}</h3>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h3 className={`text-xs md:text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{title}</h3>
           </div>
         </div>
       </div>
@@ -277,7 +277,7 @@ const handleFrequencySubmit = async () => {
 
   const AirConSystem = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 xl:gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 xl:gap-3">
         <MetricCard
           title="運行狀態"
           value={essData.aircon.status}
@@ -289,27 +289,27 @@ const handleFrequencySubmit = async () => {
           value={essData.aircon.temperature}
           unit="°C"
           icon={Thermometer}
-          status="normal"
+          status={essData.aircon.temperature === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="溫度設定"
           value={essData.aircon.temperature}
           unit="°C"
           icon={Thermometer}
-          status="normal"
+          status={essData.aircon.temperature === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="濕度"
           value={essData.aircon.humidity}
           unit="%"
           icon={Thermometer}
-          status="normal"
+          status={essData.aircon.humidity === 0 ? 'inactive' : 'normal'}
         />
         <MetricCard
           title="模式"
           value={essData.aircon.mode}
           icon={Settings}
-          status="normal"
+          status={essData.aircon.mode === 'Idle' ? 'inactive' : 'normal'}
         />
       </div>
 
@@ -785,28 +785,28 @@ const handleFrequencySubmit = async () => {
               title="充放電狀態"
               value={essData.chargeStatus}
               icon={Activity}
-              status={essData.chargeStatus}
+              status={essData.chargeStatus ===0 ? "inactive":"active"}
             />
             <MetricCard
               title="充電電流"
               value={essData.current}
               unit="A"
               icon={Battery}
-              status="normal"
+              status={essData.current ===0 ? "inactive":"active"}
             />
             <MetricCard
               title="充電電壓"
               value={essData.voltage}
               unit="V"
               icon={Zap}
-              status="normal"
+              status={essData.voltage ===0 ? "inactive":"active"}
             />
             <MetricCard
               title="電池的健康狀態"
               value={essData.soh}
               unit="%"
               icon={Battery}
-              status="normal"
+              status={essData.soh ==0 ? "inactive":"activate"}
             />
           </div>
         </div>
@@ -1171,25 +1171,36 @@ const handleFrequencySubmit = async () => {
           </div>
 
           {/* 其他PCS指標 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <MetricCard
               title="PCS狀態"
               value={essData.pcs.pcsStatus}
               icon={Activity}
-              status={essData.pcs.pcsStatus === 'charging' ? 'charging' : 'normal'}
+              status={
+                essData.pcs.pcsStatus === 'charging' ? 'charging' :
+                essData.pcs.pcsStatus === 'standby' ? 'inactive' :
+                'normal'
+              }
             />
             <MetricCard
               title="電流"
               value={essData.pcs.current}
               unit="A"
               icon={Battery}
-              status={essData.pcs.status}
+              status={
+                essData.pcs.current === 0 ? 'inactive' :
+                essData.pcs.current > 20 ? 'warning' :
+                'normal'
+              }
             />
             <MetricCard
               title="Grid狀態"
               value={essData.pcs.gridStatus}
               icon={Zap}
-              status="normal"
+              status={
+                essData.pcs.gridStatus === 'N/A' || essData.pcs.gridStatus === 0 ? 'inactive' :
+                'normal'
+              }
             />
           </div>
         </div>
