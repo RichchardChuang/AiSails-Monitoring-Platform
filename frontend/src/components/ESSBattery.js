@@ -1099,7 +1099,15 @@ const handleFrequencySubmit = async () => {
                     onClick={async () => {
                       const currentValue = editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency;
                       const newValue = Math.max(59.77, currentValue - 0.01);
+
+                      // 先更新顯示值
                       setEditingValues(prev => ({ ...prev, ['pcs_frequency']: newValue }));
+
+                      // 發送命令到後端
+                      await sendCommand('pcs', 'pcs_freq_down', `調整頻率為${newValue.toFixed(2)}Hz`);
+
+                      // 更新 realTimeData
+                      handleValueChange('pcs', 'frequency', newValue);
                     }}
                     disabled={isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) <= 59.77}
                     className={`relative w-16 h-16 rounded-full transition-all duration-200 ${
@@ -1137,7 +1145,15 @@ const handleFrequencySubmit = async () => {
                     onClick={async () => {
                       const currentValue = editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency;
                       const newValue = Math.min(60.00, currentValue + 0.01);
+
+                      // 先更新顯示值
                       setEditingValues(prev => ({ ...prev, ['pcs_frequency']: newValue }));
+
+                      // 發送命令到後端
+                      await sendCommand('pcs', 'pcs_freq_up', `調整頻率為${newValue.toFixed(2)}Hz`);
+
+                      // 更新 realTimeData
+                      handleValueChange('pcs', 'frequency', newValue);
                     }}
                     disabled={isExecuting || (editingValues['pcs_frequency'] !== undefined ? editingValues['pcs_frequency'] : essData.pcs.frequency) >= 60.00}
                     className={`relative w-16 h-16 rounded-full transition-all duration-200 ${
