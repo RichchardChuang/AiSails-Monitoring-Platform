@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp, Cloud, Sun, CloudRain, Navigation } from 'lucide-react';
+import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp, Cloud, Sun, CloudRain, Navigation, User } from 'lucide-react';
 
-const Dashboard = ({ realTimeData, isDarkMode }) => {
+const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) => {
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [showUserInfo, setShowUserInfo] = useState(false);
   const dieselData = realTimeData.diesel;
 
   useEffect(() => {
@@ -526,7 +527,7 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
         {/* 中間 - 能源生產卡片和效能指標 */}
         <div className="lg:col-span-1 space-y-6">
           <EnergyCard />
-          
+
           {/* 效能指標 */}
           {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4">
@@ -547,6 +548,41 @@ const Dashboard = ({ realTimeData, isDarkMode }) => {
         {/* 右側 - 天氣狀況 */}
         <div className="lg:col-span-1">
           <WeatherCard />
+        </div>
+      </div>
+
+      {/* 账号 icon - 仅在 500px-767px 之间显示在左下角 */}
+      <div className="hidden min-[500px]:flex md:hidden fixed bottom-4 left-4 z-50">
+        <div className="relative">
+          {/* 圆形账号 icon - 更小尺寸 */}
+          <div
+            className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110 cursor-pointer"
+            onMouseEnter={() => setShowUserInfo(true)}
+            onMouseLeave={() => setShowUserInfo(false)}
+          >
+            <User className="w-4 h-4 text-white" />
+          </div>
+
+          {/* 验证状态提示框 - 鼠标悬停时显示 */}
+          {showUserInfo && (
+            <div
+              className={`absolute bottom-10 left-0 ${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'} rounded-xl p-3 shadow-lg border min-w-[180px] text-center`}
+              onMouseEnter={() => setShowUserInfo(true)}
+              onMouseLeave={() => setShowUserInfo(false)}
+            >
+              {isAuthenticated && currentUser ? (
+                <>
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name || currentUser.username}</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>已驗證</p>
+                </>
+              ) : (
+                <>
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Energy Manager</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>未驗證</p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

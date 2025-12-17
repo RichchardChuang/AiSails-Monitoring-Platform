@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wind, Battery, Zap, Fuel,RotateCw , AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, BarChart3, Gauge, Menu, X, User, Search, Bell, FileText, Moon, Sun } from 'lucide-react';
+import { Wind, Battery, Zap, Fuel,RotateCw , AlertTriangle, CheckCircle, Activity, TrendingUp, Settings, BarChart3, Gauge, Menu, X, User, Search, Bell, FileText, Moon, Sun, Maximize, Minimize } from 'lucide-react';
 import { PublicClientApplication } from '@azure/msal-browser';
 
 // 導入各個頁面組件
@@ -19,6 +19,8 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showUserInfoHeader, setShowUserInfoHeader] = useState(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,7 +31,36 @@ const App = () => {
     skysails: {
       windSpeed: 0,  // pn14.wind
       tension: 0,  // pn14.force
-      status: 'standby'  // pn14.status
+      status: 'standby',  // pn14.status
+      frequency: 60,  // pn14.frequency
+      // 連線資訊
+      connected: false,  // pn14.connected
+      ip: '',  // pn14.ip
+      port: 0,  // pn14.port
+      name: '',  // pn14.name
+      last_seen: null,  // pn14.last_seen
+      last_topic: '',  // pn14.last_topic
+      last_payload: '',  // pn14.last_payload
+      timeout_sec: 15,  // pn14.timeout_sec
+      // 設備分組資料
+      groups: {
+        Chopper: {},  // pn14.groups.Chopper (變流器)
+        Gridcon: {},  // pn14.groups.Gridcon (電力/能量)
+        MastAnemometer: {},  // pn14.groups.MastAnemometer (Mast姿態方位)
+        TowPoint: {},  // pn14.groups.TowPoint (拖曳點)
+        TowingWinch: {},  // pn14.groups.TowingWinch (拖曳絞盤)
+        WeatherStation: {},  // pn14.groups.WeatherStation (ENV)
+        others: {}  // pn14.groups.others (其他)
+      },
+      group_names: {
+        Chopper: '變流器',
+        Gridcon: '電力/能量',
+        MastAnemometer: 'Mast姿態方位',
+        TowPoint: '拖曳點',
+        TowingWinch: '拖曳絞盤',
+        WeatherStation: 'ENV',
+        others: '其他'
+      }
     },
     ess: {
       switch: false,  // sbms.active
@@ -133,12 +164,35 @@ const App = () => {
     },
   });
 
+  // 全螢幕切換函數
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  // 監聽全螢幕狀態變化
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // 自動清除認證錯誤 (10秒後)
   useEffect(() => {
     if (authError) {
       const timer = setTimeout(() => {
         setAuthError(null);
-      }, 10000); // 10秒
+      }, 1000); // 10秒
 
       return () => clearTimeout(timer);
     }
@@ -198,7 +252,36 @@ const App = () => {
           skysails: {
             windSpeed: data.devices.pn14?.wind || 0,
             tension: data.devices.pn14?.force || 0,
-            status: data.devices.pn14?.status === 'Inactive' ? 'standby' : 'active'
+            status: data.devices.pn14?.status === 'Inactive' ? 'standby' : 'active',
+            frequency: data.devices.pn14?.frequency || 60,
+            // 連線資訊
+            connected: data.devices.pn14?.connected !== false,
+            ip: data.devices.pn14?.ip || '',
+            port: data.devices.pn14?.port || 0,
+            name: data.devices.pn14?.name || '',
+            last_seen: data.devices.pn14?.last_seen || null,
+            last_topic: data.devices.pn14?.last_topic || '',
+            last_payload: data.devices.pn14?.last_payload || '',
+            timeout_sec: data.devices.pn14?.timeout_sec || 15,
+            // 設備分組資料
+            groups: {
+              Chopper: data.devices.pn14?.groups?.Chopper || {},
+              Gridcon: data.devices.pn14?.groups?.Gridcon || {},
+              MastAnemometer: data.devices.pn14?.groups?.MastAnemometer || {},
+              TowPoint: data.devices.pn14?.groups?.TowPoint || {},
+              TowingWinch: data.devices.pn14?.groups?.TowingWinch || {},
+              WeatherStation: data.devices.pn14?.groups?.WeatherStation || {},
+              others: data.devices.pn14?.groups?.others || {}
+            },
+            group_names: data.devices.pn14?.group_names || {
+              Chopper: '變流器',
+              Gridcon: '電力/能量',
+              MastAnemometer: 'Mast姿態方位',
+              TowPoint: '拖曳點',
+              TowingWinch: '拖曳絞盤',
+              WeatherStation: 'ENV',
+              others: '其他'
+            }
           },
           ess: {
             //Air Conditioner 空調系統
@@ -442,18 +525,34 @@ const App = () => {
     return (
       <>
         {error && (
-          <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Internet Error: {error}</span>
+          <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg z-50">
+            <div className="flex items-center justify-between space-x-3">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">Internet Error: {error}</span>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-700 hover:text-red-900 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}
         {authError && (
-          <div className="fixed top-16 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg shadow-lg z-50">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">認證錯誤: {authError}</span>
+          <div className="fixed bottom-20 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg shadow-lg z-50">
+            <div className="flex items-center justify-between space-x-3">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">認證錯誤: {authError}</span>
+              </div>
+              <button
+                onClick={() => setAuthError(null)}
+                className="text-yellow-700 hover:text-yellow-900 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}
@@ -491,7 +590,9 @@ const App = () => {
       currentSite,
       setCurrentSite,
       handleCommandExecute,
-      isDarkMode
+      isDarkMode,
+      isAuthenticated,
+      currentUser
     };
 
     switch (selectedCategory) {
@@ -649,7 +750,7 @@ const App = () => {
         {/* 主要內容區域 - 左邊留出側邊欄空間，移除多重滾動 */}
         <div className="flex-1 min-w-0 flex flex-col h-screen">
           {/* 頂部導航 - 固定不滾動 */}
-          <header className="bg-blue-/70 shadow-sm border-b border-gray-200 px-2 sm:px-4 lg:px-8 py-3 sm:py-4 flex-shrink-0">
+          <header className={`shadow-sm border-b px-2 sm:px-4 lg:px-8 py-3 sm:py-4 flex-shrink-0 ${isDarkMode ? 'bg-gray-900/95 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* 漢堡選單只在 < 500px 顯示 */}
@@ -678,7 +779,7 @@ const App = () => {
                   className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                   title="Refresh data"
                 >
-                  <RotateCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} ${isLoading ? 'animate-spin' : ''}`} />
+                  <RotateCw className={`w-5 h-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'} ${isLoading ? 'animate-spin' : ''}`} />
                 </button>
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
@@ -686,28 +787,75 @@ const App = () => {
                   title={isDarkMode ? '切換至日間模式' : '切換至夜間模式'}
                 >
                   {isDarkMode ? (
-                    <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
+                    <Sun className="w-5 h-5 text-yellow-400" />
                   ) : (
-                    <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-800" />
+                    <Moon className="w-5 h-5 text-gray-900" />
                   )}
                 </button>
-                <Bell className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'} hidden sm:block`} />
-                <div className="hidden sm:flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="hidden md:block">
-                    {isAuthenticated && currentUser ? (
-                      <>
-                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name || currentUser.username}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>已驗證</p>
-                      </>
-                    ) : (
-                      <>
-                        <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Energy Manager</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>未驗證</p>
-                      </>
+                <Bell className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} strokeWidth={2.2} />
+                <button
+                  onClick={toggleFullscreen}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} hidden sm:block`}
+                  title={isFullscreen ? '退出全螢幕' : '進入全螢幕'}
+                >
+                  {isFullscreen ? (
+                    <Minimize className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} />
+                  ) : (
+                    <Maximize className={`w-4 h-4 sm:w-5 sm:h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} />
+                  )}
+                </button>
+                {/* 账号 icon - 在中等屏幕时隐藏，大屏幕和极小屏幕时显示在右上角 */}
+                <div className="hidden max-[499px]:block md:flex items-center space-x-2">
+                  {/* 小屏幕 (<500px) - 只显示圆形 icon，悬停显示信息 */}
+                  <div className="md:hidden relative">
+                    <div
+                      className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-all"
+                      onMouseEnter={() => setShowUserInfoHeader(true)}
+                      onMouseLeave={() => setShowUserInfoHeader(false)}
+                    >
+                      <User className="w-3 h-3 text-white" />
+                    </div>
+
+                    {/* 悬停提示框 */}
+                    {showUserInfoHeader && (
+                      <div
+                        className={`absolute top-8 right-0 ${isDarkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'} rounded-xl p-3 shadow-lg border min-w-[180px] text-center z-50`}
+                        onMouseEnter={() => setShowUserInfoHeader(true)}
+                        onMouseLeave={() => setShowUserInfoHeader(false)}
+                      >
+                        {isAuthenticated && currentUser ? (
+                          <>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name || currentUser.username}</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>已驗證</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Energy Manager</p>
+                            <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>未驗證</p>
+                          </>
+                        )}
+                      </div>
                     )}
+                  </div>
+
+                  {/* 大屏幕 (≥768px) - 显示圆形 icon 和用户信息 */}
+                  <div className="hidden md:flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      {isAuthenticated && currentUser ? (
+                        <>
+                          <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentUser.name || currentUser.username}</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>已驗證</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Energy Manager</p>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`}>未驗證</p>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
