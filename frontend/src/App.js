@@ -10,8 +10,11 @@ import ESSBattery from './components/ESSBattery';
 import DieselGen from './components/DieselGen';
 import SettingsPage from './components/SettingsPage';
 
-// API 基礎 URL - 方案 A (前後端分離)
-const API_BASE_URL = 'http://localhost:5000/api';
+// 導入模擬數據
+import { generateMockData } from './mockData';
+
+// 開發模式標誌 - 設置為 true 使用假數據
+const USE_MOCK_DATA = true;
 
 const App = () => {
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
@@ -238,13 +241,22 @@ const App = () => {
   const fetchDeviceStatus = async () => {
     try {
       setError(null);
-      const response = await fetch('/status');
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // 使用模擬數據模式
+      let data;
+      if (USE_MOCK_DATA) {
+        // 使用假數據
+        data = generateMockData();
+      } else {
+        // 使用真實 API
+        const response = await fetch('/status');
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        data = await response.json();
       }
-
-      const data = await response.json();
 
       // 將後端數據映射到前端 realTimeData 結構
       if (data.devices) {
@@ -505,7 +517,7 @@ const App = () => {
           setError(`資料更新失敗：無法連接到後端服務器`);
         }
       });
-    }, 10000);
+    }, 1000); // 每1秒更新一次
 
     return () => clearInterval(interval);
   }, []);
@@ -792,7 +804,11 @@ const App = () => {
                     <Moon className="w-5 h-5 text-gray-900" />
                   )}
                 </button>
-                <Bell className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} strokeWidth={2.2} />
+                <button
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <Bell className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-800'}`} strokeWidth={2.2} />
+                </button>
                 <button
                   onClick={toggleFullscreen}
                   className={`p-1.5 sm:p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} hidden sm:block`}
@@ -805,7 +821,7 @@ const App = () => {
                   )}
                 </button>
                 {/* 账号 icon - 在中等屏幕时隐藏，大屏幕和极小屏幕时显示在右上角 */}
-                <div className="hidden max-[499px]:block md:flex items-center space-x-2">
+                <div className="hidden max-[499px]:block md:flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg transition-colors">
                   {/* 小屏幕 (<500px) - 只显示圆形 icon，悬停显示信息 */}
                   <div className="md:hidden relative">
                     <div

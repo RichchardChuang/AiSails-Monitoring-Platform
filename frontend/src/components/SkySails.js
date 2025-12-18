@@ -1,468 +1,448 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Wind, Activity, Gauge, TrendingUp, Power, AlertTriangle, CheckCircle } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useState, useEffect, useMemo, useRef, memo } from 'react';
+import { Wind, Activity, Gauge, TrendingUp, Power, Zap, CloudRain, TrendingDown, Battery, Thermometer } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 
 const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
-  const [chartTimeRange, setChartTimeRange] = useState('1h');
+  const [activeView, setActiveView] = useState('overview');
   const [chartUpdateKey, setChartUpdateKey] = useState(0);
-  const [displayData, setDisplayData] = useState({ windSpeed: 0, tension: 0, status: 'active' });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const skysailsData = realTimeData.skysails;
+  // 使用 ref 來儲存最新的 realTimeData，但不觸發重渲染
+  const dataRef = useRef(realTimeData);
 
-  // 每 30 秒更新一次圖表和顯示數據
+  // 靜默更新 ref (不會觸發重渲染)
   useEffect(() => {
-    // 初始化 displayData
-    setDisplayData({
-      windSpeed: skysailsData.windSpeed,
-      tension: skysailsData.tension,
-      status: skysailsData.status
-    });
+    dataRef.current = realTimeData;
+  }, [realTimeData]);
 
+  // 初始載入後設定為 false
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 1500); // 1.5 秒後關閉初始動畫
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 從 ref 中取得資料
+  const skysailsData = dataRef.current.skysails;
+  const pn14Details = dataRef.current.pn14?.details || {};
+  const groups = pn14Details.groups || {};
+
+  // 側邊欄選項
+  const views = [
+    { id: 'overview', name: '總覽', shortName: 'Overview', icon: Activity },
+    { id: 'power', name: '電力分析', shortName: 'Power', icon: Zap },
+    { id: 'weather', name: '氣象資料', shortName: 'Weather', icon: CloudRain },
+    { id: 'performance', name: '性能指標', shortName: 'Perf.', icon: TrendingUp },
+    { id: 'system', name: '系統狀態', shortName: 'System', icon: Gauge }
+  ];
+
+  // 每 30 秒更新一次圖表資料 (獨立於外部 realTimeData 的更新)
+  useEffect(() => {
     const interval = setInterval(() => {
       setChartUpdateKey(prev => prev + 1);
-      // 同時更新顯示數據
-      setDisplayData({
-        windSpeed: skysailsData.windSpeed,
-        tension: skysailsData.tension,
-        status: skysailsData.status
-      });
-    }, 30000); // 30秒 = 30000毫秒
-
+    }, 30000); // 30 秒
     return () => clearInterval(interval);
-  }, [skysailsData.windSpeed, skysailsData.tension, skysailsData.status]);
+  }, []);
 
-  const MetricCard = ({ title, value, unit, status, icon: Icon, trend, subtitle, className = "" }) => (
-    <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${className}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-2 min-w-0 flex-1">
-          <div className={`p-2 ${isDarkMode ? 'bg-blue-900/50' : 'bg-blue-50'} rounded-lg flex-shrink-0`}>
-            <Icon className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-          </div>
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <h3 className={`text-xs md:text-sm xl:text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} truncate`}>{title}</h3>
-            {subtitle && <p className={`text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>{subtitle}</p>}
-          </div>
-        </div>
-        {status && (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            status === 'active' ? 'bg-green-100 text-green-800' :
-            status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
-            {status.toUpperCase()}
-          </span>
-        )}
-      </div>
-      
-      <div className="flex items-end justify-between">
-        <div>
-          <div className="flex items-baseline space-x-1">
-            <span className={`text-4xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-              {typeof value === 'number' ? value.toFixed(1) : value}
-            </span>
-            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{unit}</span>
-          </div>
-          {trend && (
-            <div className="flex items-center mt-1">
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-              <span className="text-xs text-green-600">+{trend}%</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // 使用 useMemo 緩存圖表數據，只在 chartUpdateKey 或 chartTimeRange 改變時才重新生成
-  const chartData = useMemo(() => {
-    const points = chartTimeRange === '1h' ? 60 : chartTimeRange === '24h' ? 24 : 7;
+  // 生成趨勢資料
+  // 使用 useMemo 緩存圖表數據，只在 chartUpdateKey 改變時才重新生成
+  // 這樣即使 realTimeData 每秒更新，圖表也不會每秒重新渲染
+  const trendData = useMemo(() => {
     const data = [];
-    for (let i = points; i >= 0; i--) {
-      const currentWindSpeed = Math.max(0, skysailsData.windSpeed + (Math.random() - 0.5) * 8);
-
+    for (let i = 23; i >= 0; i--) {
       data.push({
-        time: chartTimeRange === '1h' ? `${i}m ago` :
-              chartTimeRange === '24h' ? `${i}h ago` :
-              `${i}d ago`,
-        windSpeed: currentWindSpeed,
-        tension: Math.max(0, skysailsData.tension + (Math.random() - 0.5) * 500),
-        // 功率根據風速計算，風速的立方關係更接近實際風力發電
-        power: Math.max(0, Math.min(100, Math.pow(currentWindSpeed / 15, 3) * 80 + (Math.random() - 0.5) * 10))
+        time: `${i}h`,
+        windSpeed: Math.max(0, skysailsData.windSpeed + (Math.random() - 0.5) * 3),
+        power: Math.max(0, (skysailsData.windSpeed + (Math.random() - 0.5) * 2) * 10),
+        temperature: Math.max(15, Math.min(30, 22 + (Math.random() - 0.5) * 5)),
+        humidity: Math.max(40, Math.min(80, 60 + (Math.random() - 0.5) * 20))
       });
     }
     return data.reverse();
-  }, [chartUpdateKey, chartTimeRange, skysailsData.windSpeed, skysailsData.tension]);
+  }, [chartUpdateKey]); // 只依賴 chartUpdateKey，不依賴 realTimeData
 
-  // 計算動態 Y 軸範圍
-  const yAxisRanges = useMemo(() => {
-    const windSpeeds = chartData.map(d => d.windSpeed);
-    const powers = chartData.map(d => d.power);
+  // 電力分佈資料
+  const powerDistribution = useMemo(() => {
+    const gridcon = groups.Gridcon || {};
+    return [
+      { name: '有功功率', value: Math.abs(gridcon.ActivePower || 1.5), color: '#3b82f6' },
+      { name: '無功功率', value: Math.abs(gridcon.ReactivePower || 1.3), color: '#60a5fa' },
+      { name: '系統損耗', value: 0.5, color: '#93c5fd' }
+    ];
+  }, [chartUpdateKey]); // 只依賴 chartUpdateKey
 
-    const minWindSpeed = Math.min(...windSpeeds);
-    const maxWindSpeed = Math.max(...windSpeeds);
-    const minPower = Math.min(...powers);
-    const maxPower = Math.max(...powers);
+  // 系統健康度資料
+  const systemHealthData = useMemo(() => {
+    const weather = groups.WeatherStation || {};
+    return [
+      { subject: '風速', value: Math.min(100, (skysailsData.windSpeed / 15) * 100), fullMark: 100 },
+      { subject: '溫度', value: Math.min(100, ((weather.temperature || 20) / 35) * 100), fullMark: 100 },
+      { subject: '濕度', value: Math.min(100, (weather.relativehumidity || 60)), fullMark: 100 },
+      { subject: '壓力', value: Math.min(100, ((weather.pressure || 1000) / 1100) * 100), fullMark: 100 },
+      { subject: '效能', value: 85, fullMark: 100 }
+    ];
+  }, [chartUpdateKey]); // 只依賴 chartUpdateKey
 
-    // 添加 10% 的緩衝空間，讓圖表看起來更舒適
-    const windSpeedBuffer = (maxWindSpeed - minWindSpeed) * 0.1 || 1;
-    const powerBuffer = (maxPower - minPower) * 0.1 || 5;
+  // 小型數據卡片
+  const SmallCard = ({ title, value, unit, icon: Icon, trend, color = 'blue' }) => (
+    <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-2 md:p-4 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} hover:shadow-md transition-all`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{title}</span>
+        <Icon className={`w-4 h-4 text-${color}-500`} />
+      </div>
+      <div className="flex items-baseline space-x-1">
+        <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          {typeof value === 'number' ? value.toFixed(1) : value}
+        </span>
+        <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{unit}</span>
+      </div>
+      {trend && (
+        <div className="flex items-center mt-1">
+          {trend > 0 ? (
+            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+          ) : (
+            <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
+          )}
+          <span className={`text-xs ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {Math.abs(trend)}%
+          </span>
+        </div>
+      )}
+    </div>
+  );
 
-    return {
-      windSpeed: {
-        min: Math.max(0, Math.floor(minWindSpeed - windSpeedBuffer)),
-        max: Math.ceil(maxWindSpeed + windSpeedBuffer)
-      },
-      power: {
-        min: Math.max(0, Math.floor(minPower - powerBuffer)),
-        max: Math.ceil(maxPower + powerBuffer)
-      }
-    };
-  }, [chartData]);
+  // 總覽視圖
+  const OverviewView = () => {
+    const gridcon = groups.Gridcon || {};
+    const weather = groups.WeatherStation || {};
 
-  const WindSpeedChart = () => (
-    <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
-      <div className="flex items-center justify-between mb-6">
-        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>Wind Speed Trend</h3>
-        <div className="flex space-x-2">
-          {['1h', '24h', '7d'].map((range) => (
-            <button
-              key={range}
-              onClick={() => setChartTimeRange(range)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-                chartTimeRange === range
-                  ? isDarkMode
-                    ? 'bg-blue-900/50 text-blue-300'
-                    : 'bg-blue-100 text-blue-700'
-                  : isDarkMode
-                    ? 'text-gray-400 hover:bg-gray-700'
-                    : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              {range}
-            </button>
+    return (
+      <div className="space-y-3 md:space-y-6">
+        {/* 快速指標 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+          <SmallCard title="即時風速" value={skysailsData.windSpeed} unit="m/s" icon={Wind} trend={5.2} color="blue" />
+          <SmallCard title="有功功率" value={Math.abs(gridcon.ActivePower || 0)} unit="kW" icon={Zap} trend={-2.1} color="yellow" />
+          <SmallCard title="環境溫度" value={weather.temperature || 0} unit="°C" icon={Thermometer} trend={1.5} color="orange" />
+          <SmallCard title="相對濕度" value={weather.relativehumidity || 0} unit="%" icon={CloudRain} trend={0} color="cyan" />
+        </div>
+
+        {/* 主要圖表區 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-6">
+          {/* 趨勢圖 */}
+          <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-3 md:p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h3 className={`text-sm md:text-lg font-semibold mb-2 md:mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>24小時風速趨勢</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={trendData} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="colorWind" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+                <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
+                <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={40} />
+                <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
+                <Area type="monotone" dataKey="windSpeed" stroke="#3b82f6" fillOpacity={1} fill="url(#colorWind)" isAnimationActive={isInitialLoad} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* 系統健康雷達圖 */}
+          <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-3 md:p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h3 className={`text-sm md:text-lg font-semibold mb-2 md:mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>系統健康度</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <RadarChart data={systemHealthData}>
+                <PolarGrid stroke={isDarkMode ? '#4b5563' : '#d1d5db'} strokeWidth={1.5} />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={{ fill: isDarkMode ? '#9ca3af' : '#6b7280', fontSize: 13, fontWeight: 500 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDarkMode ? '#1f2937' : 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 12px'
+                  }}
+                  labelStyle={{ color: isDarkMode ? '#fff' : '#000', fontWeight: 'bold' }}
+                  formatter={(value) => [`${value.toFixed(1)}%`, '健康度']}
+                />
+                <Radar name="健康度" dataKey="value" stroke="#3b82f6" strokeWidth={2} fill="#3b82f6" fillOpacity={0.6} isAnimationActive={isInitialLoad} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* 電力分佈圓餅圖 */}
+        <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-3 md:p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h3 className={`text-sm md:text-lg font-semibold mb-2 md:mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>電力分佈</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={powerDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={true}
+                label={({ name, percent, x, y, fill, cx }) => {
+                  const isRightSide = x > cx;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill={fill}
+                      textAnchor={isRightSide ? 'start' : 'end'}
+                      dominantBaseline="central"
+                      fontSize="12"
+                      fontWeight="500"
+                    >
+                      <tspan x={x} dy="-21">{name}</tspan>
+                      <tspan x={x} dy="17">{(percent * 100).toFixed(0)}%</tspan>
+                    </text>
+                  );
+                }}
+                outerRadius={75}
+                fill="#8884d8"
+                dataKey="value"
+                isAnimationActive={isInitialLoad}
+              >
+                {powerDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // 電力分析視圖
+  const PowerView = () => {
+    const gridcon = groups.Gridcon || {};
+    const powerHistory = useMemo(() => {
+      return trendData.map((item) => ({
+        time: item.time,
+        active: Math.abs(gridcon.ActivePower || 0) + (Math.random() - 0.5) * 0.5,
+        reactive: Math.abs(gridcon.ReactivePower || 0) + (Math.random() - 0.5) * 0.3,
+        total: Math.abs(gridcon.ActivePower || 0) + Math.abs(gridcon.ReactivePower || 0) + (Math.random() - 0.5) * 0.8
+      }));
+    }, [trendData]); // 只依賴 trendData，不依賴 gridcon
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <SmallCard title="有功功率" value={Math.abs(gridcon.ActivePower || 0)} unit="kW" icon={Zap} color="blue" />
+          <SmallCard title="無功功率" value={Math.abs(gridcon.ReactivePower || 0)} unit="kVar" icon={Power} color="cyan" />
+          <SmallCard title="電池電量" value={gridcon.BatterySOC || 0} unit="%" icon={Battery} color="green" />
+        </div>
+
+        {/* 功率趨勢長條圖 */}
+        <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>功率歷史記錄</h3>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={powerHistory} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
+              <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+              <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Bar dataKey="active" fill="#3b82f6" name="有功功率" radius={[8, 8, 0, 0]} isAnimationActive={isInitialLoad} />
+              <Bar dataKey="reactive" fill="#06b6d4" name="無功功率" radius={[8, 8, 0, 0]} isAnimationActive={isInitialLoad} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 電力詳細數據 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.entries(gridcon).map(([key, value]) => (
+            <div key={key} className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-lg p-4 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{key}</span>
+              <div className={`text-xl font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {typeof value === 'number' ? value.toFixed(2) : value || 'N/A'}
+              </div>
+            </div>
           ))}
         </div>
       </div>
-      
-      <div className="h-64 relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }} key={chartUpdateKey}>
-            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#f3f4f6'} />
-            <XAxis
-              dataKey="time"
-              axisLine={true}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
-            />
-            {/* 左側 Y 軸 - 風速（動態範圍） */}
-            <YAxis
-              yAxisId="left"
-              domain={[yAxisRanges.windSpeed.min, yAxisRanges.windSpeed.max]}
-              axisLine={true}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
-              label={{ value: '風速 (m/s)', angle: -90, position: 'insideLeft', fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
-            />
-            {/* 右側 Y 軸 - 功率（動態範圍） */}
-            <YAxis
-              yAxisId="right"
-              orientation="right"
-              domain={[yAxisRanges.power.min, yAxisRanges.power.max]}
-              axisLine={true}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
-              label={{ value: '功率 (kW)', angle: 90, position: 'insideRight', fill: isDarkMode ? '#9ca3af' : '#6b7280' }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: isDarkMode ? '#1f2937' : 'white',
-                border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
-                borderRadius: '8px',
-                fontSize: '12px',
-                color: isDarkMode ? '#e5e7eb' : '#000000'
-              }}
-              isAnimationActive={false}
-            />
-            {/* 風速線 - 使用左側 Y 軸 */}
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="windSpeed"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={{ fill: '#3b82f6', strokeWidth: 0, r: 3 }}
-              activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 2 }}
-              name="風速"
-              isAnimationActive={false}
-            />
-            {/* 功率線 - 使用右側 Y 軸 */}
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="power"
-              stroke="#ef4444"
-              strokeWidth={2}
-              dot={{ fill: '#ef4444', strokeWidth: 0, r: 3 }}
-              activeDot={{ r: 5, stroke: '#ef4444', strokeWidth: 2 }}
-              name="功率"
-              isAnimationActive={false}
-            />
-          </LineChart>
+    );
+  };
+
+  // 氣象資料視圖
+  const WeatherView = () => {
+    const weather = groups.WeatherStation || {};
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <SmallCard title="溫度" value={weather.temperature || 0} unit="°C" icon={Thermometer} color="orange" />
+          <SmallCard title="濕度" value={weather.relativehumidity || 0} unit="%" icon={CloudRain} color="cyan" />
+          <SmallCard title="氣壓" value={weather.pressure || 0} unit="hPa" icon={Gauge} color="blue" />
+          <SmallCard title="風速" value={weather.apparentwindSpeed || 0} unit="m/s" icon={Wind} color="sky" />
+        </div>
+
+        {/* 溫濕度趨勢 */}
+        <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>溫濕度變化</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={trendData} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
+              <YAxis yAxisId="left" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+              <YAxis yAxisId="right" orientation="right" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+              <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="temperature" stroke="#f97316" strokeWidth={2} name="溫度 (°C)" isAnimationActive={isInitialLoad} />
+              <Line yAxisId="right" type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={2} name="濕度 (%)" isAnimationActive={isInitialLoad} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 氣象詳細數據 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(weather).map(([key, value]) => (
+            <div key={key} className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-lg p-4 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{key}</span>
+              <div className={`text-xl font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {typeof value === 'number' ? value.toFixed(2) : value || 'N/A'}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // 性能指標視圖
+  const PerformanceView = () => (
+    <div className="space-y-6">
+      <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>系統性能趨勢</h3>
+        <ResponsiveContainer width="100%" height={350}>
+          <AreaChart data={trendData} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+            <defs>
+              <linearGradient id="colorPower" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
+            <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
+            <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+            <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
+            <Area type="monotone" dataKey="power" stroke="#3b82f6" fill="url(#colorPower)" isAnimationActive={isInitialLoad} />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
 
-  const TensionGauge = () => {
-    const maxTension = 5000;
-    const percentage = (skysailsData.tension / maxTension) * 100;
-    const strokeDasharray = 2 * Math.PI * 70; // 圓周長
-    const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
+  // 系統狀態視圖
+  const SystemView = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4">
+        {Object.keys(groups).map((groupKey) => {
+          const groupData = groups[groupKey];
+          if (!groupData || Object.keys(groupData).length === 0) return null;
 
-    return (
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">Tension Monitor</h3>
-        <div className="flex items-center justify-center">
-          <div className="relative w-40 h-40">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke="#f3f4f6"
-                strokeWidth="10"
-              />
-              <circle
-                cx="80"
-                cy="80"
-                r="70"
-                fill="none"
-                stroke={percentage > 80 ? "#ef4444" : percentage > 60 ? "#f59e0b" : "#10b981"}
-                strokeWidth="10"
-                strokeDasharray={strokeDasharray}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-                className="transition-all duration-500"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-2xl font-bold text-gray-900">{skysailsData.tension}</span>
-              <span className="text-sm text-gray-500">N</span>
-              <span className="text-xs text-gray-400">{percentage.toFixed(1)}%</span>
+          return (
+            <div key={groupKey} className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{groupKey}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(groupData).map(([key, value]) => (
+                  <div key={key} className={`${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg p-3`}>
+                    <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{key}</span>
+                    <div className={`text-lg font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {typeof value === 'number' ? value.toFixed(2) : value || 'N/A'}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="mt-4 text-center">
-          <div className="flex justify-between text-sm text-gray-500">
-            <span>0 N</span>
-            <span>Max: {maxTension} N</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const PowerOutput = () => {
-    const power = skysailsData.windSpeed * 100; // 模擬功率計算
-    
-    return (
-      <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">Power Output</h3>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">Current Output</span>
-            <span className="font-bold text-lg text-blue-600">{power.toFixed(1)} kW</span>
-          </div>
-          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">Efficiency</span>
-            <span className="font-medium">
-              {Math.min(95, 70 + (skysailsData.windSpeed / 20 * 25)).toFixed(1)}%
-            </span>
-          </div>
-          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-            <span className="text-gray-700">Daily Total</span>
-            <span className="font-medium">{(power * 24).toFixed(0)} kWh</span>
-          </div>
-        </div>
-        
-        {/* 功率趨勢小圖 */}
-        <div className="mt-6">
-          <p className="text-sm text-gray-500 mb-2">24h Power Trend</p>
-          <div className="h-16 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-2">
-            <svg className="w-full h-full" viewBox="0 0 200 40">
-              <polyline
-                fill="none"
-                stroke="#3b82f6"
-                strokeWidth="2"
-                points={Array.from({length: 24}, (_, i) => {
-                  const x = (i * 200) / 23;
-                  const y = 35 - (Math.random() * 25 + 5);
-                  return `${x},${y}`;
-                }).join(' ')}
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const SystemStatus = () => (
-    <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold mb-6">System Status</h3>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="font-medium text-green-800">SkySails PN14 Operational</p>
-              <p className="text-sm text-green-600">All systems functioning normally</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Uptime</p>
-            <p className="text-lg font-bold text-gray-900">99.2%</p>
-          </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Last Maintenance</p>
-            <p className="text-lg font-bold text-gray-900">7d ago</p>
-          </div>
-        </div>
-        
-        {skysailsData.windSpeed > 15 && (
-          <div className="flex items-center space-x-3 p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
-            <AlertTriangle className="w-5 h-5 text-yellow-600" />
-            <div>
-              <p className="font-medium text-yellow-800">High Wind Speed Warning</p>
-              <p className="text-sm text-yellow-600">Wind speed exceeds normal operating range</p>
-            </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );
 
+  // 渲染當前視圖
+  const renderView = () => {
+    switch (activeView) {
+      case 'overview': return <OverviewView />;
+      case 'power': return <PowerView />;
+      case 'weather': return <WeatherView />;
+      case 'performance': return <PerformanceView />;
+      case 'system': return <SystemView />;
+      default: return <OverviewView />;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white">
-        <h2 className="text-2xl font-bold mb-2">SkySails PN14 監控</h2>
-        <p className="text-blue-100">風力發電系統實時監控與狀態顯示</p>
-      </div>
+    <div className="flex space-x-2 md:space-x-4">
+      {/* 透明側邊欄 */}
+      <div className={`w-16 md:w-24 flex-shrink-0 ${isDarkMode ? 'bg-gray-900/50' : 'bg-white/50'} backdrop-blur-md rounded-xl md:rounded-2xl p-2 md:p-3 shadow-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} relative z-40 md:z-50`}>
+        <div className="space-y-2 md:space-y-3">
+          {views.map((view) => {
+            const Icon = view.icon;
+            const isActive = activeView === view.id;
+            return (
+              <button
+                key={view.id}
+                onClick={() => setActiveView(view.id)}
+                className={`w-full p-2 md:p-3 rounded-lg md:rounded-xl transition-all duration-200 group relative ${
+                  isActive
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : isDarkMode
+                      ? 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                      : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="w-5 h-5 md:w-6 md:h-6 mx-auto" />
+                <span className="text-[8px] md:text-[10px] mt-0.5 md:mt-1 block text-center font-medium whitespace-pre-line leading-tight">
+                  {view.shortName}
+                </span>
 
-      {/* 主要指標卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <MetricCard
-          title="風速"
-          value={displayData.windSpeed}
-          unit="m/s"
-          status={displayData.status}
-          icon={Wind}
-          trend={displayData.windSpeed > 10 ? "5.2" : null}
-          subtitle="平均風速"
-        />
-        <MetricCard
-          title="拉力"
-          value={displayData.tension}
-          unit="N"
-          status={displayData.tension === "--" || displayData.tension === 0 ? "inactive" : "active"}
-          icon={Gauge}
-          trend={displayData.tension > 2000 ? "3.1" : null}
-          subtitle="系統張力"
-        />
-        <MetricCard
-          title="狀態"
-          value={displayData.status === 'active' ? '運行中' : '待機'}
-          unit=""
-          status={displayData.status}
-          icon={Activity}
-          subtitle="系統狀態"
-        />
-      </div>
-
-      {/* 圖表和監控區域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="lg:col-span-2">
-          <WindSpeedChart />
+                {/* 浮動提示 */}
+                <div className={`absolute left-full ml-2 px-3 py-2 rounded-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-900 text-white'} shadow-lg z-[9999]`}>
+                  {view.name}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TensionGauge />
-        <PowerOutput />
-        <SystemStatus />
-      </div> */}
-
-      {/* 詳細數據表 */}
-      {/* <div className="bg-white/70 rounded-2xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold mb-6">詳細參數</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-900 mb-3">風力參數</h4>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">瞬時風速</span>
-              <span className="font-medium">{skysailsData.windSpeed.toFixed(1)} m/s</span>
+      {/* 主要內容區 */}
+      <div className="flex-1 space-y-3 md:space-y-6">
+        {/* 頁面標題 */}
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-3 md:p- text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg md:text-3xl font-bold mb-1 md:mb-2 flex items-center">
+                <Wind className="w-5 h-5 md:w-8 md:h-8 mr-2 md:mr-3 animate-pulse flex-shrink-0" />
+                <span className="truncate">SkySails PN14</span>
+              </h2>
+              <p className="text-blue-100 text-xs md:text-sm">風力發電系統即時監控與資料分析</p>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">平均風速 (10min)</span>
-              <span className="font-medium">{(skysailsData.windSpeed * 0.9).toFixed(1)} m/s</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">最大風速 (今日)</span>
-              <span className="font-medium">{(skysailsData.windSpeed * 1.3).toFixed(1)} m/s</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">風向</span>
-              <span className="font-medium">西南風</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-900 mb-3">張力系統</h4>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">主纜張力</span>
-              <span className="font-medium">{skysailsData.tension} N</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">最大張力</span>
-              <span className="font-medium">{(skysailsData.tension * 1.2).toFixed(0)} N</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">張力變化率</span>
-              <span className="font-medium">+2.3%</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">安全係數</span>
-              <span className="font-medium">2.1</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="font-medium text-gray-900 mb-3">發電參數</h4>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">瞬時功率</span>
-              <span className="font-medium">{(skysailsData.windSpeed * 100).toFixed(1)} kW</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">今日發電量</span>
-              <span className="font-medium">{(skysailsData.windSpeed * 100 * 8).toFixed(0)} kWh</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">發電效率</span>
-              <span className="font-medium">{Math.min(95, 70 + (skysailsData.windSpeed / 20 * 25)).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <span className="text-gray-700">運行時間</span>
-              <span className="font-medium">18.5 小時</span>
+            <div className={`px-1.5 py-0.5 md:px-2 md:py-1 rounded-md ${pn14Details.connected ? 'bg-green-500' : 'bg-red-500'} animate-pulse flex-shrink-0 ml-2`}>
+              <span className="text-[10px] md:text-xs font-medium whitespace-nowrap">{pn14Details.connected ? '✓ 已連接' : '✗ 離線'}</span>
             </div>
           </div>
         </div>
-      </div> */}
+
+        {/* 動態內容 */}
+        {renderView()}
+      </div>
     </div>
   );
 };
 
-export default SkySails;
+// 使用 React.memo 包裹組件，自定義比較函數
+// 只在 isDarkMode 改變時才重新渲染，忽略 realTimeData 的變化
+export default memo(SkySails, (prevProps, nextProps) => {
+  // 返回 true 表示不重新渲染，返回 false 表示需要重新渲染
+  // 只有當 isDarkMode 改變時才重新渲染
+  return prevProps.isDarkMode === nextProps.isDarkMode;
+});
