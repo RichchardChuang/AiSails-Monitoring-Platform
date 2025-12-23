@@ -360,6 +360,24 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
     // 根據風速動態設置背景顏色
     const windSpeedGradient = getWindSpeedGradient(weatherData.windSpeed);
 
+    // 風速對照區間
+    const windSpeedRanges = [
+      { min: 29, label: '29+', gradient: isDarkMode ? 'bg-gradient-to-r from-purple-900 to-purple-800' : 'bg-gradient-to-r from-purple-600 to-purple-500' },
+      { min: 27, label: '27', gradient: isDarkMode ? 'bg-gradient-to-r from-fuchsia-900 to-pink-900' : 'bg-gradient-to-r from-fuchsia-500 to-pink-500' },
+      { min: 24, label: '24', gradient: isDarkMode ? 'bg-gradient-to-r from-red-900 to-red-800' : 'bg-gradient-to-r from-red-600 to-red-500' },
+      { min: 20, label: '20', gradient: isDarkMode ? 'bg-gradient-to-r from-orange-900 to-orange-800' : 'bg-gradient-to-r from-orange-500 to-orange-400' },
+      { min: 18, label: '18', gradient: isDarkMode ? 'bg-gradient-to-r from-amber-800 to-yellow-800' : 'bg-gradient-to-r from-amber-700 to-yellow-700' },
+      { min: 16, label: '16', gradient: isDarkMode ? 'bg-gradient-to-r from-yellow-800 to-lime-800' : 'bg-gradient-to-r from-yellow-700 to-lime-700' },
+      { min: 14, label: '14', gradient: isDarkMode ? 'bg-gradient-to-r from-lime-800 to-green-800' : 'bg-gradient-to-r from-lime-700 to-green-700' },
+      { min: 12, label: '12', gradient: isDarkMode ? 'bg-gradient-to-r from-green-800 to-emerald-800' : 'bg-gradient-to-r from-green-400 to-emerald-400' },
+      { min: 10, label: '10', gradient: isDarkMode ? 'bg-gradient-to-r from-emerald-800 to-teal-800' : 'bg-gradient-to-r from-emerald-400 to-teal-400' },
+      { min: 8, label: '8', gradient: isDarkMode ? 'bg-gradient-to-r from-teal-800 to-cyan-800' : 'bg-gradient-to-r from-cyan-400 to-cyan-300' },
+      { min: 6, label: '6', gradient: isDarkMode ? 'bg-gradient-to-r from-cyan-800 to-sky-800' : 'bg-gradient-to-r from-cyan-400 to-sky-400' },
+      { min: 4, label: '4', gradient: isDarkMode ? 'bg-gradient-to-r from-sky-800 to-blue-800' : 'bg-gradient-to-r from-sky-400 to-blue-400' },
+      { min: 2, label: '2', gradient: isDarkMode ? 'bg-gradient-to-r from-blue-900 to-blue-800' : 'bg-gradient-to-r from-blue-500 to-blue-400' },
+      { min: 0, label: '0', gradient: isDarkMode ? 'bg-gradient-to-r from-indigo-900 to-blue-950' : 'bg-gradient-to-r from-indigo-500 to-blue-700' }
+    ];
+
     return (
       <div className={`rounded-2xl p-6 text-white shadow-sm border relative overflow-hidden transition-all duration-700 ${windSpeedGradient} ${
         isDarkMode ? 'border-gray-700' : 'border-gray-100'
@@ -369,53 +387,73 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
         <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-8 -translate-x-8"></div>
 
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Weather conditions</h3>
-              <p className={`text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.location}</p>
-            </div>
-            <div className="flex items-center">
-              <img 
-                src={`https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`}
-                alt="天氣圖標" 
-                className="w-12 h-12"
-              />
-            </div>
-          </div>
+          {/* 主要天氣信息和風速圖例的彈性布局 */}
+          <div className="flex gap-4">
+            {/* 左側：主要天氣信息 */}
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Weather conditions</h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.location}</p>
+                </div>
+                <div className="flex items-center">
+                  <img
+                    src={`https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`}
+                    alt="天氣圖標"
+                    className="w-12 h-12"
+                  />
+                </div>
+              </div>
 
-          <div className="mb-4">
-            <div className="flex items-baseline">
-              <span className="text-4xl font-bold">{weatherData.temperature.toFixed(1)}</span>
-              <span className="text-lg ml-1">°C</span>
-            </div>
-            <p className={`text-sm capitalize ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.description}</p>
-          </div>
+              <div className="mb-4">
+                <div className="flex items-baseline">
+                  <span className="text-4xl font-bold">{weatherData.temperature.toFixed(1)}</span>
+                  <span className="text-lg ml-1">°C</span>
+                </div>
+                <p className={`text-sm capitalize ${isDarkMode ? 'text-blue-200' : 'text-blue-100'}`}>{weatherData.description}</p>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <Wind className="w-4 h-4" />
-              <div>
-                <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風速</p>
-                <p className="font-semibold">{weatherData.windSpeed} m/s</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <Wind className="w-4 h-4" />
+                  <div>
+                    <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風速</p>
+                    <p className="font-semibold">{weatherData.windSpeed} m/s</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Navigation
+                    className="w-4 h-4"
+                    style={{ transform: `rotate(${weatherData.windDeg || 0}deg)` }}
+                  />
+                  <div>
+                    <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風向</p>
+                    <p className="font-semibold">{weatherData.windDir}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>濕度</p>
+                  <p className="font-semibold">{weatherData.humidity}%</p>
+                </div>
+                <div>
+                  <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>氣壓</p>
+                  <p className="font-semibold">{weatherData.pressure} hPa</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Navigation
-                className="w-4 h-4"
-                style={{ transform: `rotate(${weatherData.windDeg || 0}deg)` }}
-              />
-              <div>
-                <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>風向</p>
-                <p className="font-semibold">{weatherData.windDir}</p>
+
+            {/* 右側：風速對照圖例 */}
+            <div className="w-16 flex flex-col justify-center">
+              <div className="flex flex-col space-y-0.5">
+                {windSpeedRanges.map((range, index) => (
+                  <div key={index} className="flex items-center space-x-1">
+                    <div className={`flex-1 h-4 rounded-sm ${range.gradient}`}></div>
+                    <span className="text-[10px] font-medium w-7 text-right">
+                      {range.label}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div>
-              <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>濕度</p>
-              <p className="font-semibold">{weatherData.humidity}%</p>
-            </div>
-            <div>
-              <p className={isDarkMode ? 'text-blue-200' : 'text-blue-100'}>氣壓</p>
-              <p className="font-semibold">{weatherData.pressure} hPa</p>
             </div>
           </div>
         </div>
