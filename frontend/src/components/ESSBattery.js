@@ -1189,7 +1189,7 @@ const handleFrequencySubmit = async () => {
           {/* 其他PCS指標 */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             <MetricCard
-              title="PCS狀態"
+              title="PCS"
               value={essData.pcs.pcsStatus}
               icon={Activity}
               status={
@@ -1210,7 +1210,7 @@ const handleFrequencySubmit = async () => {
               }
             />
             <MetricCard
-              title="Grid狀態"
+              title="Grid"
               value={essData.pcs.gridStatus}
               icon={Zap}
               status={

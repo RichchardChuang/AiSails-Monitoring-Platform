@@ -14,7 +14,7 @@ import SettingsPage from './components/SettingsPage';
 import { generateMockData } from './mockData';
 
 // 開發模式標誌 - 設置為 true 使用假數據
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 const App = () => {
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
@@ -683,20 +683,20 @@ const App = () => {
             <div className="flex items-center justify-center w-full">
               {/* 完整 Logo - 大螢幕顯示 */}
               <div className="hidden lg:block w-full">
-                <h1 className="text-lg font-bold text-white mb-3">
-                  <img src="\images\aisails-logo.png" className="w-25 h-8" alt="AiSails Logo" />
+                <h1 className="text-lg font-bold text-white mb-3 cursor-pointer" onClick={() => setSelectedCategory('dashboard')}>
+                  <img src="\images\aisails-logo.png" className="w-25 h-8 hover:opacity-80 transition-opacity" alt="AiSails Logo" />
                 </h1>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-indigo-200'}`}>{currentSite}</p>
               </div>
 
               {/* 中等螢幕 - 顯示縮小的 Logo */}
-              <div className="hidden min-[500px]:flex lg:hidden items-center justify-center">
-                <img src="\images\aisails-logo.png" className="h-6 w-auto" alt="AiSails Logo" />
+              <div className="hidden min-[500px]:flex lg:hidden items-center justify-center cursor-pointer" onClick={() => setSelectedCategory('dashboard')}>
+                <img src="\images\aisails-logo.png" className="h-6 w-auto hover:opacity-80 transition-opacity" alt="AiSails Logo" />
               </div>
 
               {/* 小螢幕 - 顯示小 Logo（漢堡選單打開時） */}
-              <div className={`min-[500px]:hidden flex items-center justify-center ${!isSidebarOpen && 'hidden'}`}>
-                <img src="\images\aisails-logo.png" className="h-6 w-auto" alt="AiSails Logo" />
+              <div className={`min-[500px]:hidden flex items-center justify-center cursor-pointer ${!isSidebarOpen && 'hidden'}`} onClick={() => { setSelectedCategory('dashboard'); setIsSidebarOpen(false); }}>
+                <img src="\images\aisails-logo.png" className="h-6 w-auto hover:opacity-80 transition-opacity" alt="AiSails Logo" />
               </div>
             </div>
 
@@ -762,7 +762,7 @@ const App = () => {
         {/* 主要內容區域 - 左邊留出側邊欄空間，移除多重滾動 */}
         <div className="flex-1 min-w-0 flex flex-col h-screen">
           {/* 頂部導航 - 固定不滾動 */}
-          <header className={`shadow-sm border-b px-2 sm:px-4 lg:px-8 py-3 sm:py-4 flex-shrink-0 ${isDarkMode ? 'bg-gray-900/95 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
+          <header className={`shadow-sm border-b px-2 sm:px-4 lg:px-8 py-3 sm:py-4 flex-shrink-0 ${isDarkMode ? 'bg-gray-900/70 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* 漢堡選單只在 < 500px 顯示 */}

@@ -79,33 +79,43 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
       }
     }
   };
-  const MetricCard = ({ title, value, unit, change, trend, className = "", children,content = "", onClick }) => (
-    <div
-      className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300 ${onClick ? 'cursor-pointer' : ''} ${className}`}
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{title}</p>
-          <div className="flex items-baseline mt-4">
-            <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              {typeof value === 'number' ? value.toFixed(1) : value}
-            </span>
-            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ml-1`}>{unit}</span>
-          </div>
-          {change && (
-            <div className="flex items-center mt-2">
-              <span className={`text-sm ${trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                {trend === 'up' ? '+' : '-'}{change}%
+  const MetricCard = React.memo(({ title, value, unit, change, trend, className = "", children,content = "", onClick }) => {
+    // 判斷是否需要警示效果
+    const shouldShowWarning =
+      (title === "ESS" && content && !content.includes("Charging") && !content.includes("Discharging") && !content.includes("Ready")) ||
+      (title === "PCS Frequency" && (() => {
+        const freqValue = typeof value === 'number' ? value : parseFloat(value);
+        return !isNaN(freqValue) && (freqValue < 59.77 || freqValue > 60.23);
+      })());
+
+    return (
+      <div
+        className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-shadow duration-300 ${onClick ? 'cursor-pointer' : ''} ${shouldShowWarning ? 'ess-warning-blink' : ''} ${className}`}
+        onClick={onClick}
+      >
+        <div className="flex items-start justify-between mb-2">
+          <div>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{title}</p>
+            <div className="flex items-baseline mt-4">
+              <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {typeof value === 'number' ? value.toFixed(1) : value}
               </span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ml-1`}>{unit}</span>
             </div>
-          )}
+            {change && (
+              <div className="flex items-center mt-2">
+                <span className={`text-sm ${trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                  {trend === 'up' ? '+' : '-'}{change}%
+                </span>
+              </div>
+            )}
+          </div>
+          {children}
         </div>
-        {children}
+        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{content}</div>
       </div>
-      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>{content}</div>
-    </div>
-  );
+    );
+  });
 
   const CategorySpendingChart = () => {
     const categories = [
@@ -116,7 +126,7 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
     ];
 
     return (
-      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+      <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
         <h3 className={`text-lg font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>System Distribution</h3>
         <div className="flex items-center justify-center mb-6">
           <div className="relative w-40 h-40">
@@ -336,7 +346,7 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
   const WeatherCard = () => {
     if (loading) {
       return (
-        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-center h-40">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           </div>
@@ -346,7 +356,7 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
 
     if (!weatherData) {
       return (
-        <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+        <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
           <div className="flex items-center justify-center h-40">
             <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <Cloud className="w-8 h-8 mx-auto mb-2" />
@@ -480,7 +490,7 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
     ];
 
     return (
-      <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300`}>
+      <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300`}>
         <div className="mb-4">
           <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>系統連線</p>
           <div className="flex items-baseline mt-4">
@@ -514,6 +524,11 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
     );
   };
 
+  // ESS 狀態變數
+  const essStatus = realTimeData.ess?.status || 'NaN';
+  // const essStatus = 'test';  // 測試用:觸發警示
+  const essSoc = realTimeData.ess?.soc || 0;
+
   return (
     <div className="space-y-8">
       {/* 頂部指標卡片 */}
@@ -521,16 +536,19 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
         <SystemStatusCard />
 
         {/* ESS Battery 狀態卡片 */}
-        <MetricCard
-          title="ESS"
-          value={(realTimeData.ess?.soc || 0).toFixed(1)}
-          unit="%"
-          // change="1.8"
-          trend="up"
-          content={`Active: ${realTimeData.ess?.status || 'NaN'}`}
-        >
-          <Battery className="w-8 h-8 text-green-500" />
-        </MetricCard>
+        {/* <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-300`}
+       ref={essCardRef}> */}
+          <MetricCard
+            title="ESS"
+            value={essSoc.toFixed(1)}
+            unit="%"
+            // change="1.8"
+            trend="up"
+            content={`Active: ${essStatus}`}
+          >
+            <Battery className="w-8 h-8 text-green-500" />
+          </MetricCard>
+        {/* </div> */}
 
         <MetricCard
           title="PCS Frequency"

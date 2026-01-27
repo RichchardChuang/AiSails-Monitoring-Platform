@@ -182,26 +182,15 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
             <PieChart>
               <Pie
                 data={powerDistribution}
-                cx="50%"
-                cy="50%"
+                cx="47%"
+                cy="60%"
                 labelLine={true}
-                label={({ name, percent, x, y, fill, cx }) => {
-                  const isRightSide = x > cx;
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill={fill}
-                      textAnchor={isRightSide ? 'start' : 'end'}
-                      dominantBaseline="central"
-                      fontSize="12"
-                      fontWeight="500"
-                    >
-                      <tspan x={x} dy="-21">{name}</tspan>
-                      <tspan x={x} dy="17">{(percent * 100).toFixed(0)}%</tspan>
-                    </text>
-                  );
-                }}
+                label={({ name, percent, x, y, fill }) => (
+                  <text x={x} y={y} fill={fill} textAnchor={x > 150 ? 'start' : 'end'} dominantBaseline="central" fontSize="12" fontWeight="500">
+                    <tspan x={x} dy="-21">{name}</tspan>
+                    <tspan x={x} dy="17">{(percent * 100).toFixed(0)}%</tspan>
+                  </text>
+                )}
                 outerRadius={75}
                 fill="#8884d8"
                 dataKey="value"
@@ -243,10 +232,10 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
         <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>功率歷史記錄</h3>
           <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={powerHistory} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+            <BarChart data={powerHistory}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
-              <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+              <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
               <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
               <Legend />
               <Bar dataKey="active" fill="#3b82f6" name="有功功率" radius={[8, 8, 0, 0]} isAnimationActive={isInitialLoad} />
@@ -287,11 +276,11 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
         <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>溫濕度變化</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trendData} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+            <LineChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
-              <YAxis yAxisId="left" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
-              <YAxis yAxisId="right" orientation="right" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+              <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+              <YAxis yAxisId="left" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+              <YAxis yAxisId="right" orientation="right" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
               <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
               <Legend />
               <Line yAxisId="left" type="monotone" dataKey="temperature" stroke="#f97316" strokeWidth={2} name="溫度 (°C)" isAnimationActive={isInitialLoad} />
@@ -321,7 +310,7 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       <div className={`${isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'} backdrop-blur-sm rounded-xl p-6 shadow-sm border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>系統性能趨勢</h3>
         <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={trendData} margin={{ top: 5, right: -5, left: -25, bottom: 5 }}>
+          <AreaChart data={trendData}>
             <defs>
               <linearGradient id="colorPower" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -329,8 +318,8 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#e5e7eb'} />
-            <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} />
-            <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} style={{ fontSize: '10px' }} width={30} />
+            <XAxis dataKey="time" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+            <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
             <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#1f2937' : 'white', border: 'none', borderRadius: '8px' }} />
             <Area type="monotone" dataKey="power" stroke="#3b82f6" fill="url(#colorPower)" isAnimationActive={isInitialLoad} />
           </AreaChart>
@@ -417,7 +406,7 @@ const SkySails = ({ realTimeData, setRealTimeData, isDarkMode }) => {
       {/* 主要內容區 */}
       <div className="flex-1 space-y-3 md:space-y-6">
         {/* 頁面標題 */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-3 md:p- text-white shadow-xl">
+        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 rounded-xl p-3 md:p-6 text-white shadow-xl">
           <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
               <h2 className="text-lg md:text-3xl font-bold mb-1 md:mb-2 flex items-center">

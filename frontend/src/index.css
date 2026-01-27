@@ -15,3 +15,18 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ESS Battery 警示閃爍效果 - 使用純 CSS 動畫，不受 React 重新渲染影響 */
+.ess-warning-blink {
+  animation: ess-blink 1s ease-in-out infinite !important;
+  border-color: rgba(239, 68, 68, 0.7) !important;
+}
+
+@keyframes ess-blink {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 1), 0 0 20px rgba(239, 68, 68, 0.8), 0 0 10px rgba(239, 68, 68, 0.6);
+  }
+}
