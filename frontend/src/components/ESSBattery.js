@@ -248,7 +248,7 @@ const handleFrequencySubmit = async () => {
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>電池容量</span>
-              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_capacity || 0).toFixed(1)}%</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_capacity || 0).toFixed(1)}kWh</span>
             </div>
           </div>
         </div>

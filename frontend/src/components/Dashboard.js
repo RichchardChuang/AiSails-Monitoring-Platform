@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Wind, Battery, Zap, Fuel, AlertTriangle, CheckCircle, Activity, TrendingUp, Cloud, Sun, CloudRain, Navigation, User } from 'lucide-react';
+
+// 動態載入 3D 組件
+const SystemTopology3D = React.lazy(() => import('./SystemTopology3D'));
 
 const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) => {
   const [weatherData, setWeatherData] = useState(null);
@@ -563,7 +566,7 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
 
         <MetricCard
           title="Diesel Status"
-          value= {dieselData.status.engineSwitch === false ? '停止' : '運行'}
+          value= {dieselData.status.started === false ? '停止' : '運行'}
           unit=""
           // change="0"
           content={"output power: " + (dieselData.other.power || "0") + " kw"}
@@ -606,6 +609,17 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
           <WeatherCard />
         </div>
       </div>
+
+      {/* 3D 系統拓撲圖 */}
+      <Suspense fallback={
+        <div className={`${isDarkMode ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+          </div>
+        </div>
+      }>
+        <SystemTopology3D realTimeData={realTimeData} isDarkMode={isDarkMode} />
+      </Suspense>
 
       {/* 账号 icon - 仅在 500px-767px 之间显示在左下角 */}
       <div className="hidden min-[500px]:flex md:hidden fixed bottom-4 left-4 z-50">

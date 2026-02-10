@@ -366,7 +366,7 @@ const App = () => {
               started: data.devices.diesel?.started || false,
               // mode: data.devices.diesel?.status?.includes('Auto') ? 0 : 1,
               manual_mode: data.devices.diesel?.manual_mode === true ? "手動" : "自動3",
-              acb: data.devices.diesel?.status?.includes('OFF') ? 0 : 1,
+              acb: (typeof data.devices.diesel?.status === 'string' && data.devices.diesel?.status?.includes('OFF')) ? 0 : 1,
               frequency: data.devices.diesel?.frequency || 0,
               oilPressure: data.devices.diesel?.oilpressure || 0,
               coolantTemp: data.devices.diesel?.coolertemperature || 0,
