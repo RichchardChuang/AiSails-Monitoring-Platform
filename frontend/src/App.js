@@ -71,7 +71,7 @@ const App = () => {
       chargeStatus: 'status',  // 充放電狀態 sbms.active Charge discharge state  it seem like status is derived from active
 
       voltage: 0,  // sbms.voltage
-      current: 0,  // sbms.current
+      current: 0,  // sbms.current 是否上電看這項essData.current != 0
       rack1: {
         temperature: 0  // sbms.rack1.temperature
       },

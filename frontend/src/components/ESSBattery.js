@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Battery, Power, Thermometer, Zap, Activity, Settings, ToggleLeft, ToggleRight, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDarkMode }) => {
@@ -6,6 +6,7 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDar
   const [isAdmin] = useState(true); // TODO: 從權限管理系統獲取
   const [isExecuting, setIsExecuting] = useState(false);
   const [editingValues, setEditingValues] = useState({}); // 儲存編輯中的值
+  const [alertMessage, setAlertMessage] = useState(null); // 顯示後端回傳的訊息
 
   const essData = realTimeData.ess;
 
@@ -19,6 +20,16 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDar
     }
   }, [essData.pcs.frequency, editingValues]);
 
+  // Alert 訊息 5 秒後自動消失
+  useEffect(() => {
+    if (alertMessage) {
+      const timer = setTimeout(() => {
+        setAlertMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertMessage]);
+
   // 發送命令到後端並記錄 log
   const sendCommand = async (device, action, description) => {
     setIsExecuting(true);
@@ -28,29 +39,44 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDar
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device, action })
       });
-      
+
       const result = await response.json();
-      
+      const message = result.message;
+
+      // 顯示後端回傳的訊息
+      setAlertMessage({
+        type: response.ok ? 'success' : 'error',
+        text: message
+      });
+
       // 如果父組件提供了 handleCommandExecute callback，呼叫它
       if (handleCommandExecute) {
         handleCommandExecute({
           device,
           action,
           success: response.ok,
-          message: result.message || result.error,
+          message,
           description
         });
       }
-      
+
       return response.ok;
     } catch (error) {
       console.error('Error sending command:', error);
+      const errorMessage = '無法連接後端服務';
+
+      // 顯示錯誤訊息
+      setAlertMessage({
+        type: 'error',
+        text: errorMessage
+      });
+
       if (handleCommandExecute) {
         handleCommandExecute({
           device,
           action,
           success: false,
-          message: 'Unable to connect to backend service',
+          message: errorMessage,
           description
         });
       }
@@ -61,13 +87,13 @@ const ESSBattery = ({ realTimeData, setRealTimeData, handleCommandExecute, isDar
   };
 
   const toggleESSSwitch = async () => {
-    const newState = !essData.switch;
-    const action = newState ? 'run_microgrid' : 'stop_microgrid';
+    const newState = essData.current === 0;
+    const action = newState ? 'start_microgrid' : 'stop_microgrid';
     const description = newState ? 'ESS Battery 系統開啟' : 'ESS Battery 系統關閉';
-    
-    // 先發送命令到後端
+
+    // sendCommand 內部已經會處理 isExecuting 狀態
     const success = await sendCommand('sbms', action, description);
-    
+
     // 如果成功，更新本地狀態
     if (success) {
       setRealTimeData(prev => ({
@@ -248,7 +274,7 @@ const handleFrequencySubmit = async () => {
             </div>
             <div className={`flex justify-between items-center p-3 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg`}>
               <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>電池容量</span>
-              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_capacity || 0).toFixed(1)}kWh</span>
+              <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>{(essData.ups?.ups_capacity || 0).toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -465,9 +491,9 @@ const handleFrequencySubmit = async () => {
                 {/* 左側 - ESS 開關 */}
                 <div>
                   <span className={`px-2 py-1 rounded-full text-[0.65rem] font-medium whitespace-nowrap ${
-                    (essData.switch || essData.ups?.switch) ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'
+                    (essData.current != 0) ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'
                   }`}>
-                    {(essData.switch || essData.ups?.switch) ? 'ACTIVATE' : 'INACTIVE'}
+                    {(essData.current != 0) ? 'ACTIVATE' : 'INACTIVE'}
                   </span>
                   <div className="flex items-start justify-between mt-3">
                     <div className="flex items-center space-x-3">
@@ -480,16 +506,16 @@ const handleFrequencySubmit = async () => {
                     </div>
                   </div>
                   <div className="mt-4">
-                    {/* <button
+                    <button
                       onClick={toggleESSSwitch}
                       disabled={!isAdmin || isExecuting}
                       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                        (essData.switch || essData.ups?.switch) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
+                        (essData.current != 0) ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'
                       } ${(!isAdmin || isExecuting) ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                      {(essData.switch || essData.ups?.switch) ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                      <span className="font-medium text-xl">{(essData.switch || essData.ups?.switch) ? 'RUN' : 'STOP'}</span>
-                    </button> */}
+                      {(essData.current != 0) ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                      <span className="font-medium text-xl">{(essData.current != 0) ? 'RUN' : 'STOP'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -779,7 +805,7 @@ const handleFrequencySubmit = async () => {
               title="系統狀態"
               value={essData.status}
               icon={Activity}
-              status={essData.status === 'active' || (essData.switch || essData.ups?.switch) ? 'activate' : 'inactive'}
+              status={essData.status === 'active' || (essData.current != 0) ? 'activate' : 'inactive'}
             />
             <MetricCard
               title="充放電狀態"
@@ -1249,11 +1275,31 @@ const handleFrequencySubmit = async () => {
         </div>
       </div>
 
-      {/* 執行中提示 */}
+      {/* 執行中遮罩 - 阻止使用者點擊 */}
       {isExecuting && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          <span>執行中...</span>
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-gray-700 dark:text-gray-200 font-medium">執行中，請稍候...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Toast - 頂部通知，5秒自動消失 */}
+      {alertMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg flex items-center space-x-3 ${
+            alertMessage.type === 'success'
+              ? 'bg-green-500 text-white'
+              : 'bg-red-500 text-white'
+          }`}>
+            {alertMessage.type === 'success' ? (
+              <span className="text-xl">✓</span>
+            ) : (
+              <AlertTriangle className="w-5 h-5" />
+            )}
+            <span className="font-medium">{alertMessage.text}</span>
+          </div>
         </div>
       )}
     </div>

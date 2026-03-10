@@ -21,40 +21,39 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
     try {
       const response = await fetch('/logs');
       if (response.ok) {
-        const backendLogs = await response.json();
+        const data = await response.json();
+        const backendLogs = data.logs || [];
         console.log('從後端收到的 logs 數量:', backendLogs.length);
         console.log('前 3 筆 logs:', backendLogs.slice(0, 3));
 
         // 將後端的 log 格式轉換為前端格式
-        const formattedLogs = backendLogs.map((logMessage, index) => {
-          // 解析 log 訊息格式：
-          // 成功: "[2025-08-26 14:18:54] Action power_on_sbms executed in 20.01 seconds"
-          // 錯誤: "[2025-08-27 15:22:46] Error executing action power_on_sbms: error message"
+        // 後端回傳格式: { timestamp, time, message, level }
+        const formattedLogs = backendLogs.map((logEntry, index) => {
+          const logMessage = logEntry.message || '';
+          const logTimestamp = logEntry.timestamp || logEntry.time || '';
+          const logLevel = logEntry.level || 'info';
 
-          const timestampMatch = logMessage.match(/\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]/);
-          const isError = logMessage.includes('Error executing action');
+          const isError = logLevel === 'error' || logMessage.includes('Error') || logMessage.includes('失敗');
 
           let actionName = '';
-          let status = 'success';
+          let status = isError ? 'error' : 'success';
           let details = logMessage;
           let executionTime = '';
 
-          if (isError) {
-            // 解析錯誤訊息：Error executing action {action_name}: {error_message}
-            const errorMatch = logMessage.match(/Error executing action (\w+):\s*(.+)/);
-            if (errorMatch) {
-              actionName = errorMatch[1];
-              details = errorMatch[2] || logMessage;
-            }
+          // 解析成功訊息：Action {action_name} executed in {time} seconds
+          const actionMatch = logMessage.match(/Action (\w+) executed in ([\d.]+) seconds/);
+          if (actionMatch) {
+            actionName = actionMatch[1];
+            executionTime = actionMatch[2];
+            details = `執行成功，耗時 ${executionTime} 秒`;
+          }
+
+          // 解析錯誤訊息：Error executing action {action_name}: {error_message}
+          const errorMatch = logMessage.match(/Error executing action (\w+):\s*(.+)/);
+          if (errorMatch) {
+            actionName = errorMatch[1];
+            details = errorMatch[2] || logMessage;
             status = 'error';
-          } else {
-            // 解析成功訊息：Action {action_name} executed in {time} seconds
-            const actionMatch = logMessage.match(/Action (\w+) executed in ([\d.]+) seconds/);
-            if (actionMatch) {
-              actionName = actionMatch[1];
-              executionTime = actionMatch[2];
-              details = `執行成功，耗時 ${executionTime} 秒`;
-            }
           }
 
           // 從 action 名稱推斷設備類型
@@ -71,7 +70,7 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
 
           return {
             id: `backend-${Date.now()}-${index}`,
-            timestamp: timestampMatch ? new Date(timestampMatch[1]).toISOString() : new Date().toISOString(),
+            timestamp: logTimestamp ? new Date(logTimestamp).toISOString() : new Date().toISOString(),
             system: getSystemName(deviceType),
             operation: getOperationName(actionName),
             component: getComponentName(deviceType, actionName),

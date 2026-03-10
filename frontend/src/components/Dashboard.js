@@ -122,9 +122,9 @@ const Dashboard = ({ realTimeData, isDarkMode, isAuthenticated, currentUser }) =
 
   const CategorySpendingChart = () => {
     const categories = [
-      { name: 'SkySails WindSpeed', value: (realTimeData.skysails?.windSpeed || 0), color: 'bg-blue-500', percentage: 40 },
-      { name: 'ESS Battery', value: realTimeData.ess?.voltage || 0, color: 'bg-green-500', percentage: 35 },
-      { name: 'PCS System', value: realTimeData.ess?.pcs?.activePower || 0, color: 'bg-purple-500', percentage: 20 },
+      { name: 'SkySails WindSpeed', value: Number(realTimeData.skysails?.windSpeed) || 0, color: 'bg-blue-500', percentage: 40 },
+      { name: 'ESS Battery', value: Number(realTimeData.ess?.voltage) || 0, color: 'bg-green-500', percentage: 35 },
+      { name: 'PCS System', value: Number(realTimeData.ess?.pcs?.activePower) || 0, color: 'bg-purple-500', percentage: 20 },
       { name: 'Diesel Gen', value: 0, color: 'bg-orange-500', percentage: 5 }
     ];
 
