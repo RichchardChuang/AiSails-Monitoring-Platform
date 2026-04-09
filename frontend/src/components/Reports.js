@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FileText, Download, Filter, Search, Calendar, Power, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle, Activity, RefreshCw } from 'lucide-react';
 
 const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
@@ -15,6 +15,10 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
   const [itemsPerPage] = useState(10);
   const logsEndRef = useRef(null);
   const alertsEndRef = useRef(null);
+  const logsContainerRef = useRef(null);
+  const alertsContainerRef = useRef(null);
+  const [isUserScrollingLogs, setIsUserScrollingLogs] = useState(false);
+  const [isUserScrollingAlerts, setIsUserScrollingAlerts] = useState(false);
 
   // 從後端定期抓取 logs
   const fetchLogs = async () => {
@@ -114,10 +118,25 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // 滾動到最新的警告
+  // 滾動到最新的警告（只有當使用者沒有在滾動時才自動滾動）
   useEffect(() => {
-    alertsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [alerts]);
+    if (!isUserScrollingAlerts) {
+      alertsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [alerts, isUserScrollingAlerts]);
+
+  // 處理滾動事件 - 偵測使用者是否正在滾動
+  const handleLogsScroll = (e) => {
+    const container = e.target;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 10;
+    setIsUserScrollingLogs(!isAtBottom);
+  };
+
+  const handleAlertsScroll = (e) => {
+    const container = e.target;
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 10;
+    setIsUserScrollingAlerts(!isAtBottom);
+  };
 
   // 發送控制命令到後端
   const sendCommand = async (device, action) => {
@@ -428,8 +447,8 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
     );
   };
 
-  // 警告訊息和執行紀錄區塊
-  const LogsAndAlerts = () => (
+  // 警告訊息和執行紀錄區塊 - 使用 useMemo 避免因父組件更新導致重新 mount
+  const logsAndAlertsContent = useMemo(() => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       {/* 警告訊息 */}
       <div className={`${isDarkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/70 border-gray-100'} rounded-2xl p-6 shadow-sm border`}>
@@ -445,7 +464,11 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
             清除
           </button>
         </div>
-        <div className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}>
+        <div
+          ref={alertsContainerRef}
+          onScroll={handleAlertsScroll}
+          className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}
+        >
           {alerts.length === 0 ? (
             <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-center py-8`}>暫無警告訊息</p>
           ) : (
@@ -482,7 +505,11 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
             最近 {Math.min(logs.length, 10)} 筆
           </span>
         </div>
-        <div className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}>
+        <div
+          ref={logsContainerRef}
+          onScroll={handleLogsScroll}
+          className={`h-48 overflow-y-auto border ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} rounded-lg p-3`}
+        >
           {logs.length === 0 ? (
             <p className={`${isDarkMode ? 'text-gray-500' : 'text-gray-400'} text-center py-8`}>暫無執行紀錄</p>
           ) : (
@@ -517,7 +544,7 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
         </div>
       </div>
     </div>
-  );
+  ), [logs, alerts, isDarkMode]); // 只有這些值變化時才重新渲染
 
   // 測試控制按鈕（可選，用於測試後端連接）
   const TestControls = () => (
@@ -572,7 +599,7 @@ const Reports = ({ realTimeData, apiRequest, isDarkMode }) => {
       <OperationSummary />
 
       {/* 警告訊息和執行紀錄 */}
-      <LogsAndAlerts />
+      {logsAndAlertsContent}
 
       {/* 測試控制按鈕（開發時使用） */}
       {/* {process.env.NODE_ENV === 'development' && <TestControls />} */}

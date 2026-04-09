@@ -282,15 +282,54 @@ const handleFrequencySubmit = async () => {
         {/* UPS 負載趨勢 */}
         <div className="mt-6">
           <h4 className={`font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'} mb-4`}>UPS 負載趨勢</h4>
-          <div className={`h-32 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg p-4`}>
-            <svg className="w-full h-full" viewBox="0 0 300 80">
+          <div className={`h-56 ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'} rounded-lg p-4`}>
+            <svg className="w-full h-full" viewBox="0 0 600 140" preserveAspectRatio="xMidYMid meet">
+              {/* Y 軸 */}
+              <line x1="45" y1="15" x2="45" y2="110" stroke={isDarkMode ? '#6b7280' : '#9ca3af'} strokeWidth="1" />
+              {/* X 軸 */}
+              <line x1="45" y1="110" x2="580" y2="110" stroke={isDarkMode ? '#6b7280' : '#9ca3af'} strokeWidth="1" />
+
+              {/* Y 軸刻度和標籤 */}
+              {[0, 25, 50, 75, 100].map((tick) => {
+                const y = 110 - (tick / 100) * 95;
+                return (
+                  <g key={tick}>
+                    <line x1="42" y1={y} x2="45" y2={y} stroke={isDarkMode ? '#6b7280' : '#9ca3af'} strokeWidth="1" />
+                    <text x="38" y={y + 4} textAnchor="end" fontSize="10" fill={isDarkMode ? '#9ca3af' : '#6b7280'}>{tick}</text>
+                  </g>
+                );
+              })}
+
+              {/* Y 軸標籤 */}
+              <text x="12" y="62" textAnchor="middle" fontSize="10" fill={isDarkMode ? '#9ca3af' : '#6b7280'} transform="rotate(-90, 12, 62)">負載 %</text>
+
+              {/* X 軸刻度和標籤 */}
+              {['0s', '5s', '10s', '15s', '20s'].map((label, i) => {
+                const x = 45 + (i * 535) / 4;
+                return (
+                  <g key={label}>
+                    <line x1={x} y1="110" x2={x} y2="114" stroke={isDarkMode ? '#6b7280' : '#9ca3af'} strokeWidth="1" />
+                    <text x={x} y="126" textAnchor="middle" fontSize="10" fill={isDarkMode ? '#9ca3af' : '#6b7280'}>{label}</text>
+                  </g>
+                );
+              })}
+
+              {/* 網格線 */}
+              {[25, 50, 75].map((tick) => {
+                const y = 110 - (tick / 100) * 95;
+                return (
+                  <line key={tick} x1="45" y1={y} x2="580" y2={y} stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="0.5" strokeDasharray="4,4" />
+                );
+              })}
+
+              {/* 折線圖 */}
               <polyline
                 fill="none"
                 stroke="#10b981"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 points={Array.from({length: 20}, (_, i) => {
-                  const x = (i * 300) / 19;
-                  const y = 60 - ((essData.soc || 90) / 100 * 50) + (Math.random() - 0.5) * 10;
+                  const x = 45 + (i * 535) / 19;
+                  const y = 110 - ((essData.ups?.ups_loadpercent || 50) / 100 * 95) + (Math.sin(i * 0.5) * 8);
                   return `${x},${y}`;
                 }).join(' ')}
               />
