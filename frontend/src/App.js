@@ -14,7 +14,7 @@ import SettingsPage from './components/SettingsPage';
 import { generateMockData } from './mockData';
 
 // 開發模式標誌 - 設置為 true 使用假數據
-const USE_MOCK_DATA = false;
+const USE_MOCK_DATA = true;
 
 const App = () => {
   const [selectedCategory, setSelectedCategory] = useState('dashboard');
@@ -779,6 +779,12 @@ const App = () => {
                         selectedCategory === 'etica' ? 'ETICA ESS' :
                           selectedCategory}
                 </h2>
+                {USE_MOCK_DATA && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 animate-pulse">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full mr-1.5 animate-ping"></span>
+                    Testing Mode
+                  </span>
+                )}
                 {error && (
                   <span className="text-sm text-red-600 bg-red-50 px-2 py-1 rounded">
                     API Offline
